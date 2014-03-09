@@ -23,7 +23,7 @@ typedef struct {
 
 Config const *config;
 
-void set_default_config(Config *config);
+void init_config(Config *config);
 void print_usage();
 bool parse_command_line(int argc, char **argv, Config *config);
 void free_config(Config *config);

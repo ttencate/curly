@@ -1,5 +1,6 @@
 #include "config.h"
 #include "constants.h"
+#include "handler.h"
 
 #include <arpa/inet.h>
 #include <err.h>
@@ -73,18 +74,22 @@ int run() {
 			warn("could not accept incoming connection");
 		}
 
-		char *buffer = malloc(REQUEST_BUFFER_SIZE);
-		ssize_t bytes_read;
-		do {
-			bytes_read = read(clientfd, buffer, REQUEST_BUFFER_SIZE);
-			if (bytes_read < 0) {
+		Handler handler;
+		init_handler(&handler, clientfd);
+
+		char buffer[REQUEST_BUFFER_SIZE];
+		ssize_t count;
+		for (;;) {
+			count = read(clientfd, buffer, sizeof(buffer));
+			if (count < 0) {
 				warn("read failed");
 				break;
 			}
-		} while (bytes_read > 0);
-		free(buffer);
-
-		close(clientfd);
+			if (handle_incoming_bytes(&handler, buffer, count)) {
+				close(clientfd);
+				break;
+			}
+		}
 	}
 
 	close(sockfd);
@@ -93,7 +98,7 @@ int run() {
 
 int main(int argc, char **argv) {
 	Config the_config;
-	set_default_config(&the_config);
+	init_config(&the_config);
 	if (!parse_command_line(argc, argv, &the_config)) {
 		printf("\n");
 		print_usage(argv[0]);

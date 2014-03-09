@@ -1,7 +1,7 @@
 # We might need some automake thing to figure out header dependencies later.
 # For now, assume everything depends on every header.
 
-C_FILES=config.c
+C_FILES=config.c handler.c
 
 H_FILES=$(C_FILES:c=h) constants.h
 O_FILES=$(C_FILES:c=o)
