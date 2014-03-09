@@ -7,4 +7,10 @@
 /* Size of incoming request buffer. */
 #define REQUEST_BUFFER_SIZE 2048
 
+/* Initial size of HTTP request header line buffer. */
+#define LINE_BUFFER_SIZE 1024
+
+/* HTTP version supported. */
+#define HTTP_VERSION "1.1"
+
 #endif
