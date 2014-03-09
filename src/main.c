@@ -17,13 +17,13 @@
 int open_listening_socket() {
 	struct protoent *proto = getprotobyname("tcp");
 	if (!proto) {
-		return 0;
+		return -1;
 	}
 
 	int sockfd = socket(AF_INET, SOCK_STREAM, proto->p_proto);
 	if (sockfd == -1) {
 		warn("could not create socket");
-		return 0;
+		return -1;
 	}
 
 	struct sockaddr_in addr;
@@ -32,17 +32,20 @@ int open_listening_socket() {
 	addr.sin_port = htons(config->port);
 	if (!inet_aton(config->address, &addr.sin_addr)) {
 		warnx("listening address must be dotted quad: %s", config->address);
-		return 0;
+		close(sockfd);
+		return -1;
 	}
 
 	if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr))) {
 		warn("could not bind socket");
-		return 0;
+		close(sockfd);
+		return -1;
 	}
 
 	if (listen(sockfd, MAX_SOCKET_BACKLOG)) {
 		warn("could not listen on socket");
-		return 0;
+		close(sockfd);
+		return -1;
 	}
 
 	return sockfd;
@@ -50,7 +53,7 @@ int open_listening_socket() {
 
 int run() {
 	int sockfd = open_listening_socket();
-	if (!sockfd) {
+	if (sockfd == -1) {
 		return EX_UNAVAILABLE;
 	}
 
