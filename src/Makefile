@@ -3,7 +3,7 @@
 
 C_FILES=config.c
 
-H_FILES=$(C_FILES:c=h)
+H_FILES=$(C_FILES:c=h) constants.h
 O_FILES=$(C_FILES:c=o)
 
 CFLAGS=-std=gnu99 -pedantic -Wall -Wextra -g

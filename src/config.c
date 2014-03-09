@@ -11,6 +11,7 @@
 void set_default_config(Config *config) {
 	config->address = strdup("0.0.0.0");
 	config->port = 8080;
+	config->reuse_addr = true;
 	config->root_path = strdup(".");
 	config->print_help = false;
 }

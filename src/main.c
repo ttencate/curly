@@ -1,4 +1,5 @@
 #include "config.h"
+#include "constants.h"
 
 #include <arpa/inet.h>
 #include <err.h>
@@ -11,18 +12,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sysexits.h>
+#include <unistd.h>
 
-#define MAX_SOCKET_BACKLOG 32
+static int sockfd = 0;
 
 int open_listening_socket() {
-	struct protoent *proto = getprotobyname("tcp");
-	if (!proto) {
-		return -1;
-	}
-
-	int sockfd = socket(AF_INET, SOCK_STREAM, proto->p_proto);
-	if (sockfd == -1) {
-		warn("could not create socket");
+	struct protoent *tcp_proto = getprotobyname("tcp");
+	if (!tcp_proto) {
 		return -1;
 	}
 
@@ -32,7 +28,18 @@ int open_listening_socket() {
 	addr.sin_port = htons(config->port);
 	if (!inet_aton(config->address, &addr.sin_addr)) {
 		warnx("listening address must be dotted quad: %s", config->address);
-		close(sockfd);
+		return -1;
+	}
+
+	int sockfd = socket(AF_INET, SOCK_STREAM, tcp_proto->p_proto);
+	if (sockfd == -1) {
+		warn("could not create socket");
+		return -1;
+	}
+
+	int optval = config->reuse_addr;
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))) {
+		warn("could not set socket options");
 		return -1;
 	}
 
@@ -52,7 +59,7 @@ int open_listening_socket() {
 }
 
 int run() {
-	int sockfd = open_listening_socket();
+	sockfd = open_listening_socket();
 	if (sockfd == -1) {
 		return EX_UNAVAILABLE;
 	}
@@ -66,11 +73,21 @@ int run() {
 			warn("could not accept incoming connection");
 		}
 
-		const char* response = "HTTP/1.1 200 OK\r\nContent-type: text/plain\r\n\r\nHello world!";
-		write(clientfd, response, strlen(response));
+		char *buffer = malloc(REQUEST_BUFFER_SIZE);
+		ssize_t bytes_read;
+		do {
+			bytes_read = read(clientfd, buffer, REQUEST_BUFFER_SIZE);
+			if (bytes_read < 0) {
+				warn("read failed");
+				break;
+			}
+		} while (bytes_read > 0);
+		free(buffer);
+
 		close(clientfd);
 	}
 
+	close(sockfd);
 	return EX_OK;
 }
 
