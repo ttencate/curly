@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 typedef struct {
+	bool headers_complete;
 	char *method;
 	char *uri;
 	unsigned int http_major;

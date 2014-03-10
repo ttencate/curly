@@ -34,7 +34,11 @@ bool handle_incoming_bytes(Handler *handler, char *buffer, int count) {
 		return true;
 	}
 
-	const char *buf = "HTTP/1.1 200 OK\r\n\r\nHello world!";
-	write(handler->fd, buf, strlen(buf));
-	return true;
+	if (handler->request.headers_complete) {
+		const char *buf = "HTTP/1.1 200 OK\r\n\r\nHello world!";
+		write(handler->fd, buf, strlen(buf));
+		return true;
+	}
+
+	return false;
 }

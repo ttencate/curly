@@ -45,7 +45,7 @@ static bool parse_request_line(Request *request, char *line, int count) {
 	return false;
 }
 
-static bool parse_header(Request *request, char *line, int count) {
+static bool parse_header_line(Request *request, char *line, int count) {
 	return false;
 }
 
@@ -53,8 +53,11 @@ static bool parse_line(Parser *parser, char *line, int count) {
 	if (parser->first_line) {
 		parser->first_line = false;
 		return parse_request_line(parser->request, line, count);
+	} else if (count == 0) {
+		parser->request->headers_complete = true;
+		return false;
 	} else {
-		return parse_header(parser->request, line, count);
+		return parse_header_line(parser->request, line, count);
 	}
 }
 

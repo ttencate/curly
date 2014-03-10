@@ -80,9 +80,14 @@ int run() {
 		char buffer[REQUEST_BUFFER_SIZE];
 		ssize_t count;
 		for (;;) {
+			/* TODO timeouts */
 			count = read(clientfd, buffer, sizeof(buffer));
 			if (count < 0) {
 				warn("read failed");
+				break;
+			}
+			if (count == 0) {
+				warnx("connection closed unexpectedly");
 				break;
 			}
 			if (handle_incoming_bytes(&handler, buffer, count)) {
@@ -114,5 +119,5 @@ int main(int argc, char **argv) {
 	int exit_code = run();
 
 	free_config(&the_config);
-	return EX_OK;
+	return exit_code;
 }
