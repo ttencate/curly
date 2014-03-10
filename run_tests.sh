@@ -1,17 +1,70 @@
 #!/bin/bash
 
 function test_get_root() {
-	return 0
+	send_request "GET / HTTP/1.1\r\n\r\n"
+	assert_response_status 200
 }
 
-function test_something_fails() {
+function test_http_1_0_supported() {
+	send_request "GET / HTTP/1.0\r\n\r\n"
+	assert_response_status 200
+}
+
+function test_http_2_0_unsupported() {
+	send_request "GET / HTTP/2.0\r\n\r\n"
+	assert_response_status 505
+}
+
+function test_empty_request() {
+	send_request "\r\n\r\n"
+	assert_response_status 400
+}
+
+function test_missing_http_version() {
+	send_request "GET /\r\n\r\n"
+	assert_response_status 400
+}
+
+function test_invalid_http_version() {
+	send_request "GET / HTTP/1.x\r\n\r\n"
+	assert_response_status 400
+}
+
+function test_incomplete_http_version() {
+	send_request "GET / H\r\n\r\n"
+	assert_response_status 400
+}
+
+#-------------------------------------------------------------------------------
+# TEST HELPER FUNCTIONS
+#-------------------------------------------------------------------------------
+
+function send_request() {
+	echo -ne "$1" | nc localhost ${port} > $last_response || exit 1
+}
+
+function assert_response_status() {
+	head -n1 $last_response | grep -q " $1 " || ( \
+		echo "Expected first response line to contain $1, but was:" ; \
+		head -n1 $last_response ) | fail
+}
+
+function fail() {
+	cat
 	return 1
 }
 
 #-------------------------------------------------------------------------------
+# UNIT TEST SCAFFOLDING
+#-------------------------------------------------------------------------------
+
+last_response=$(mktemp)
+test_output=$(mktemp)
 
 function atexit() {
 	kill $curly_pid
+	rm -f $last_response
+	rm -f $test_output
 }
 
 red="\033[1;31m"
@@ -20,9 +73,12 @@ normal="\033[0m"
 
 cd $(dirname "$0")
 
+port=8081
+
 echo -n "Starting server... "
-src/curly -r test_root &
+src/curly -r test_root -p ${port} &
 curly_pid=$!
+disown
 echo "pid $curly_pid"
 trap atexit EXIT
 
@@ -32,11 +88,14 @@ while read test_func; do
 		echo -e "${red}Server no longer running, exiting${normal}"
 		exit 1
 	fi
+
 	echo -n "$(printf "%-40s" "Running ${test_func}... ")"
-	if $test_func; then
+
+	if $test_func > $test_output; then
 		echo -e "[${green}PASS${normal}]"
 	else
 		echo -e "[${red}FAIL${normal}]"
+		cat $test_output
 		(( num_failures++ ))
 	fi
 done < <(declare -F | cut -d' ' -f3 | egrep '^test_')
