@@ -1,7 +1,7 @@
 # We might need some automake thing to figure out header dependencies later.
 # For now, assume everything depends on every header.
 
-C_FILES=config.c handler.c http.c
+C_FILES=config.c handler.c http.c main.c
 
 H_FILES=$(C_FILES:c=h) constants.h
 O_FILES=$(C_FILES:c=o)
@@ -12,9 +12,14 @@ CFLAGS=-std=gnu99 -pedantic -Wall -Wextra -g
 	gcc -c $(CFLAGS) $<
 
 curly : $(O_FILES)
-	gcc -o $@ $^ main.c
+	gcc -o $@ $^
 
-.PHONY clean:
+clean:
 	rm -f *.o curly
 
-.PHONY all: curly
+test: curly
+	../run_tests.sh
+
+all: curly
+
+.PHONY: all clean
