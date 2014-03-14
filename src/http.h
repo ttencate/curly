@@ -23,15 +23,15 @@ typedef struct {
 	/* Line buffering. */
 	/* TODO: Optimize by keeping a linked list of buffers, and stick in \0 bytes
 	 * in the right places to save copying. */
-	char *line;
-	int line_size;
-	int line_length;
+	char *line_buffer;
+	int line_buffer_size;
+	int next_free_index;
 
 	/* Parser internals. */
 	bool first_line;
 } Parser;
 
 void init_parser(Parser *parser, Request *request);
-bool parse_http(Parser *parser, char *buffer, int count);
+bool parse_request_bytes(Parser *parser, char *buffer, int count);
 
 #endif

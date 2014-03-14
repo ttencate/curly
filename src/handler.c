@@ -24,7 +24,7 @@ static void respond_with_error(Handler *handler, int status, const char *descrip
 }
 
 bool handle_incoming_bytes(Handler *handler, char *buffer, int count) {
-	if (parse_http(&handler->parser, buffer, count)) {
+	if (parse_request_bytes(&handler->parser, buffer, count)) {
 		respond_with_error(handler, 400, "Bad Request");
 		return true;
 	}

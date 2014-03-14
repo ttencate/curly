@@ -87,14 +87,14 @@ int run() {
 				break;
 			}
 			if (count == 0) {
-				warnx("connection closed unexpectedly");
+				warnx("connection closed before full request received");
 				break;
 			}
 			if (handle_incoming_bytes(&handler, buffer, count)) {
-				close(clientfd);
 				break;
 			}
 		}
+		close(clientfd);
 	}
 
 	close(sockfd);

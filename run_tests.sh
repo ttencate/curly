@@ -35,6 +35,16 @@ function test_incomplete_http_version() {
 	assert_response_status 400
 }
 
+function test_null_byte_in_request_line() {
+	send_request "GET / HTTP/1.1\0\r\n\r\n"
+	assert_response_status 400
+}
+
+function test_null_byte_in_blank_line() {
+	send_request "GET / HTTP/1.1\r\n\0\r\n"
+	assert_response_status 400
+}
+
 #-------------------------------------------------------------------------------
 # TEST HELPER FUNCTIONS
 #-------------------------------------------------------------------------------
@@ -57,6 +67,10 @@ function fail() {
 #-------------------------------------------------------------------------------
 # UNIT TEST SCAFFOLDING
 #-------------------------------------------------------------------------------
+
+function all_test_functions() {
+	declare -F | cut -d' ' -f3 | egrep '^test_'
+}
 
 last_response=$(mktemp)
 test_output=$(mktemp)
@@ -82,23 +96,25 @@ disown
 echo "pid $curly_pid"
 trap atexit EXIT
 
+longest_test_function_name=$(all_test_functions | wc -L)
+
 num_failures=0
-while read test_func; do
+while read test_function; do
 	if ! kill -0 $curly_pid 2>/dev/null; then
 		echo -e "${red}Server no longer running, exiting${normal}"
 		exit 1
 	fi
 
-	echo -n "$(printf "%-40s" "Running ${test_func}... ")"
+	echo -n "$(printf "%-$(( $longest_test_function_name + 12 ))s" "Running ${test_function}... ")"
 
-	if $test_func > $test_output; then
+	if $test_function > $test_output; then
 		echo -e "[${green}PASS${normal}]"
 	else
 		echo -e "[${red}FAIL${normal}]"
 		cat $test_output
 		(( num_failures++ ))
 	fi
-done < <(declare -F | cut -d' ' -f3 | egrep '^test_')
+done < <(all_test_functions)
 
 if (( $num_failures != 0 )); then
 	if (( $num_failures == 1 )); then
