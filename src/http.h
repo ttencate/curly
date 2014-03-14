@@ -12,6 +12,7 @@ typedef struct {
 } Request;
 
 void init_request(Request *request);
+void free_request(Request *request);
 
 typedef struct {
 	/* The request to write parsed data to. */

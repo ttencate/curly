@@ -12,6 +12,7 @@ typedef struct {
 } Handler;
 
 void init_handler(Handler *handler, int fd);
+void free_handler(Handler *handler);
 bool handle_incoming_bytes(Handler *handler, char *buffer, int count);
 
 #endif

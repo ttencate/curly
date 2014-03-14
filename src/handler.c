@@ -12,6 +12,10 @@ void init_handler(Handler *handler, int fd) {
 	init_parser(&handler->parser, &handler->request);
 }
 
+void free_handler(Handler *handler) {
+	free_request(&handler->request);
+}
+
 static void respond_with_error(Handler *handler, int status, const char *description) {
 	char buf[1024];
 	snprintf(buf, 1024,

@@ -10,6 +10,9 @@ void init_request(Request *request) {
 	memset(request, 0, sizeof(*request));
 }
 
+void free_request(Request *request) {
+}
+
 void init_parser(Parser *parser, Request *request) {
 	memset(parser, 0, sizeof(*parser));
 

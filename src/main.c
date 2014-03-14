@@ -94,7 +94,9 @@ int run() {
 				break;
 			}
 		}
+
 		close(clientfd);
+		free_handler(&handler);
 	}
 
 	close(sockfd);
