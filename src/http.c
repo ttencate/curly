@@ -8,9 +8,11 @@
 
 void init_request(Request *request) {
 	memset(request, 0, sizeof(*request));
+	request->line_buffer = alloc_line_buffer();
 }
 
 void free_request(Request *request) {
+	free_line_buffer(request->line_buffer);
 }
 
 void init_parser(Parser *parser, Request *request) {

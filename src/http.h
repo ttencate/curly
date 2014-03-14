@@ -1,6 +1,8 @@
 #ifndef HTTP_H_
 #define HTTP_H_
 
+#include "linebuffer.h"
+
 #include <stdbool.h>
 
 typedef struct {
@@ -9,6 +11,8 @@ typedef struct {
 	char *uri;
 	unsigned int http_major;
 	unsigned int http_minor;
+
+	LineBuffer *line_buffer;
 } Request;
 
 void init_request(Request *request);
