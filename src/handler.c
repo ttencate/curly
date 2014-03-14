@@ -24,21 +24,21 @@ static void respond_with_error(Handler *handler, int status, const char *descrip
 }
 
 bool handle_incoming_bytes(Handler *handler, char *buffer, int count) {
-	if (parse_request_bytes(&handler->parser, buffer, count)) {
+	if (!parse_request_bytes(&handler->parser, buffer, count)) {
 		respond_with_error(handler, 400, "Bad Request");
-		return true;
+		return false;
 	}
 
 	if (handler->request.http_major > 0 && handler->request.http_major != 1) {
 		respond_with_error(handler, 505, "HTTP Version Not Supported");
-		return true;
+		return false;
 	}
 
 	if (handler->request.headers_complete) {
 		const char *buf = "HTTP/1.1 200 OK\r\n\r\nHello world!";
 		write(handler->fd, buf, strlen(buf));
-		return true;
+		return false;
 	}
 
-	return false;
+	return true;
 }

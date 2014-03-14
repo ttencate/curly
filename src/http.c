@@ -22,7 +22,7 @@ void init_parser(Parser *parser, Request *request) {
 static bool parse_request_line(Request *request, char *line) {
 	char *space = strchr(line, ' ');
 	if (!space) {
-		return true;
+		return false;
 	}
 
 	request->method = strndup(line, space - line);
@@ -30,21 +30,21 @@ static bool parse_request_line(Request *request, char *line) {
 	line += space - line + 1;
 	space = strchr(space + 1, ' ');
 	if (!space) {
-		return true;
+		return false;
 	}
 
 	request->uri = strndup(line, space - line);
 
 	line += space - line + 1;
 	if (sscanf(line, "HTTP/%u.%u\r\n", &request->http_major, &request->http_minor) < 2) {
-		return true;
+		return false;
 	}
 
-	return false;
+	return true;
 }
 
 static bool parse_header_line(Request *request, char *line) {
-	return false;
+	return true;
 }
 
 static bool parse_line(Parser *parser, char *line) {
@@ -53,7 +53,7 @@ static bool parse_line(Parser *parser, char *line) {
 		return parse_request_line(parser->request, line);
 	} else if (!*line) {
 		parser->request->headers_complete = true;
-		return false;
+		return true;
 	} else {
 		return parse_header_line(parser->request, line);
 	}
@@ -61,7 +61,7 @@ static bool parse_line(Parser *parser, char *line) {
 
 bool parse_request_bytes(Parser *parser, char *buffer, int count) {
 	if (parser->error) {
-		return true;
+		return false;
 	}
 
 	for (; count > 0; --count, ++buffer) {
@@ -80,7 +80,7 @@ bool parse_request_bytes(Parser *parser, char *buffer, int count) {
 		if (parser->next_free_index >= 2 && !strncmp("\r\n", parser->line_buffer + parser->next_free_index - 2, 2)) {
 			/* TODO line continuations */
 			parser->line_buffer[parser->next_free_index - 2] = '\0';
-			if (parse_line(parser, parser->line_buffer)) {
+			if (!parse_line(parser, parser->line_buffer)) {
 				parser->error = true;
 				break;
 			}
@@ -88,5 +88,5 @@ bool parse_request_bytes(Parser *parser, char *buffer, int count) {
 		}
 	}
 
-	return parser->error;
+	return !parser->error;
 }

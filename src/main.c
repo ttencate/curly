@@ -90,7 +90,7 @@ int run() {
 				warnx("connection closed before full request received");
 				break;
 			}
-			if (handle_incoming_bytes(&handler, buffer, count)) {
+			if (!handle_incoming_bytes(&handler, buffer, count)) {
 				break;
 			}
 		}
