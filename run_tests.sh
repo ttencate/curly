@@ -25,41 +25,6 @@ function test_empty_request() {
 	assert_response_status 400
 }
 
-function test_missing_http_version() {
-	send_request "GET /\r\n\r\n"
-	assert_response_status 400
-}
-
-function test_invalid_http_version() {
-	send_request "GET / HTTP/1.x\r\n\r\n"
-	assert_response_status 400
-}
-
-function test_incomplete_http() {
-	send_request "GET / H\r\n\r\n"
-	assert_response_status 400
-}
-
-function test_incomplete_http_version() {
-	send_request "GET / HTTP/1\r\n\r\n"
-	assert_response_status 400
-}
-
-function test_trailing_garbage_in_request_line() {
-	send_request "GET / HTTP/1.1x\r\n\r\n"
-	assert_response_status 400
-}
-
-function test_null_byte_in_request_line() {
-	send_request "GET / HTTP/1.1\0\r\n\r\n"
-	assert_response_status 400
-}
-
-function test_null_byte_in_blank_line() {
-	send_request "GET / HTTP/1.1\r\n\0\r\n"
-	assert_response_status 400
-}
-
 #-------------------------------------------------------------------------------
 # TEST HELPER FUNCTIONS
 #-------------------------------------------------------------------------------
