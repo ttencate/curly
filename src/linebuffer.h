@@ -10,6 +10,8 @@
  * users of the data inside it would have to make defensive copies anyway.
  */
 
+#include <stdbool.h>
+
 struct LineBuffer_;
 
 typedef struct LineBuffer_ {
@@ -20,5 +22,8 @@ typedef struct LineBuffer_ {
 
 LineBuffer *alloc_line_buffer();
 void free_line_buffer(LineBuffer *line_buffer);
+
+typedef bool (*LineCallback)(char *line, void *callback_arg);
+bool append_bytes(LineBuffer *line_buffer, char *buffer, int count, LineCallback callback, void *callback_arg);
 
 #endif
