@@ -1,22 +1,9 @@
-#ifndef HTTP_H_
-#define HTTP_H_
+#ifndef PARSER_H_
+#define PARSER_H_
 
-#include "constants.h"
+#include "request.h"
 
 #include <stdbool.h>
-
-typedef struct {
-	bool headers_complete;
-	char *method;
-	char *uri;
-	unsigned int http_major;
-	unsigned int http_minor;
-
-	char *buffer;
-} Request;
-
-void init_request(Request *request);
-void free_request(Request *request);
 
 typedef struct {
 	/* The request to write parsed data to. */

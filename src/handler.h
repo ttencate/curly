@@ -1,7 +1,8 @@
 #ifndef HANDLER_H_
 #define HANDLER_H_
 
-#include "http.h"
+#include "parser.h"
+#include "request.h"
 
 #include <stdbool.h>
 

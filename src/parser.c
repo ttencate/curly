@@ -1,4 +1,4 @@
-#include "http.h"
+#include "parser.h"
 
 #include "constants.h"
 
@@ -6,15 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-void init_request(Request *request) {
-	memset(request, 0, sizeof(*request));
-	request->buffer = malloc(MAX_REQUEST_SIZE);
-}
-
-void free_request(Request *request) {
-	free(request->buffer);
-}
 
 void init_parser(Parser *parser, Request *request) {
 	memset(parser, 0, sizeof(*parser));
