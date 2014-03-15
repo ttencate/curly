@@ -15,7 +15,8 @@
 struct LineBuffer_;
 
 typedef struct LineBuffer_ {
-	char *line;
+	char *buffer;
+	int buffer_size;
 	int next_free_index;
 	struct LineBuffer_ *previous;
 } LineBuffer;
@@ -23,7 +24,10 @@ typedef struct LineBuffer_ {
 LineBuffer *alloc_line_buffer();
 void free_line_buffer(LineBuffer *line_buffer);
 
+char *line_buffer_write_ptr(LineBuffer *line_buffer);
+int line_buffer_write_size(LineBuffer *line_buffer);
+
 typedef bool (*LineCallback)(char *line, void *callback_arg);
-bool append_bytes(LineBuffer *line_buffer, char *buffer, int count, LineCallback callback, void *callback_arg);
+bool line_buffer_process_appended_bytes(LineBuffer *line_buffer, int count, LineCallback callback, void *callback_arg);
 
 #endif
