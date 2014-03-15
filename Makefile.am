@@ -1,1 +1,4 @@
-SUBDIRS = src
+if WITH_CHECK
+MAYBE_TESTS = tests
+endif
+SUBDIRS = src . $(MAYBE_TESTS)
