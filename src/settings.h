@@ -1,5 +1,5 @@
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#ifndef SETTINGS_H_
+#define SETTINGS_H_
 
 #include <stdbool.h>
 
@@ -19,13 +19,13 @@ typedef struct {
 
 	/* Print usage information and exit successfully. */
 	bool print_help;
-} Config;
+} Settings;
 
-Config const *config;
+Settings const *settings;
 
-void init_config(Config *config);
+void init_settings(Settings *settings);
 void print_usage();
-bool parse_command_line(int argc, char **argv, Config *config);
-void free_config(Config *config);
+bool parse_command_line(int argc, char **argv, Settings *settings);
+void free_settings(Settings *settings);
 
 #endif

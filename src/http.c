@@ -49,6 +49,9 @@ static bool parse_request_line(Request *request, char *line) {
 }
 
 static bool parse_header_line(Request *request, char *line) {
+	/* Unused for now. */
+	(void) request;
+	(void) line;
 	return true;
 }
 

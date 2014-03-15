@@ -18,5 +18,22 @@ The name was chosen by `aspell -l en dump master | grep ^c | shuf | less`. When
 `curly` came up in the results, it seemed only too appropriate: it starts with
 C, C is a curly-braces language, and it contains "URL" in the middle.
 
+Building
+--------
+
+If you checked out from source, the following sequence of commands should build
+Curly successfully and produce a binary in `src/curly`:
+
+    ./bootstrap
+    ./configure
+    make
+
+To run the unit tests:
+
+    make check
+
+License
+-------
+
 The code is under the three-clause BSD license; see the file `LICENSE` for
 details.

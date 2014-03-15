@@ -1,4 +1,4 @@
-#include "config.h"
+#include "settings.h"
 
 #include <err.h>
 #include <errno.h>
@@ -8,12 +8,12 @@
 #include <string.h>
 #include <unistd.h>
 
-void init_config(Config *config) {
-	config->address = strdup("0.0.0.0");
-	config->port = 8080;
-	config->reuse_addr = true;
-	config->root_path = strdup(".");
-	config->print_help = false;
+void init_settings(Settings *settings) {
+	settings->address = strdup("0.0.0.0");
+	settings->port = 8080;
+	settings->reuse_addr = true;
+	settings->root_path = strdup(".");
+	settings->print_help = false;
 }
 
 void print_usage(char const *program) {
@@ -29,32 +29,32 @@ void print_usage(char const *program) {
 		program);
 }
 
-bool parse_command_line(int argc, char **argv, Config *config) {
+bool parse_command_line(int argc, char **argv, Settings *settings) {
 	char opt;
 	while ((opt = getopt(argc, argv, "a:hp:r:")) != -1) {
 		switch (opt) {
 			case 'a':
-				free(config->address);
-				config->address = strdup(optarg);
+				free(settings->address);
+				settings->address = strdup(optarg);
 				break;
 			case 'h':
-				config->print_help = true;
+				settings->print_help = true;
 				break;
 			case 'p':
 				errno = 0;
-				config->port = strtol(optarg, NULL, 10);
+				settings->port = strtol(optarg, NULL, 10);
 				if (errno) {
 					warnx("port must be a number: %s", optarg);
 					return false;
 				}
-				if (config->port <= 0 || config->port > 0xFFFF) {
+				if (settings->port <= 0 || settings->port > 0xFFFF) {
 					warnx("port number must be positive and at most 65535");
 					return false;
 				}
 				break;
 			case 'r':
-				free(config->root_path);
-				config->root_path = strdup(optarg);
+				free(settings->root_path);
+				settings->root_path = strdup(optarg);
 				break;
 			default:
 				return false;
@@ -67,7 +67,7 @@ bool parse_command_line(int argc, char **argv, Config *config) {
 	return true;
 }
 
-void free_config(Config *config) {
-	free(config->address);
-	free(config->root_path);
+void free_settings(Settings *settings) {
+	free(settings->address);
+	free(settings->root_path);
 }

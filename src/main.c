@@ -1,6 +1,6 @@
-#include "config.h"
 #include "constants.h"
 #include "handler.h"
+#include "settings.h"
 
 #include <arpa/inet.h>
 #include <err.h>
@@ -26,9 +26,9 @@ int open_listening_socket() {
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(config->port);
-	if (!inet_aton(config->address, &addr.sin_addr)) {
-		warnx("listening address must be dotted quad: %s", config->address);
+	addr.sin_port = htons(settings->port);
+	if (!inet_aton(settings->address, &addr.sin_addr)) {
+		warnx("listening address must be dotted quad: %s", settings->address);
 		return -1;
 	}
 
@@ -38,7 +38,7 @@ int open_listening_socket() {
 		return -1;
 	}
 
-	int optval = config->reuse_addr;
+	int optval = settings->reuse_addr;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))) {
 		warn("could not set socket options");
 		return -1;
@@ -104,22 +104,22 @@ int run() {
 }
 
 int main(int argc, char **argv) {
-	Config the_config;
-	init_config(&the_config);
-	if (!parse_command_line(argc, argv, &the_config)) {
+	Settings the_settings;
+	init_settings(&the_settings);
+	if (!parse_command_line(argc, argv, &the_settings)) {
 		printf("\n");
 		print_usage(argv[0]);
 		return EX_USAGE;
 	}
-	config = &the_config;
+	settings = &the_settings;
 
-	if (config->print_help) {
+	if (settings->print_help) {
 		print_usage(argv[0]);
 		return EX_OK;
 	}
 
 	int exit_code = run();
 
-	free_config(&the_config);
+	free_settings(&the_settings);
 	return exit_code;
 }

@@ -20,5 +20,11 @@ void free_line_buffer(LineBuffer *line_buffer) {
 }
 
 bool append_bytes(LineBuffer *line_buffer, char *buffer, int count, LineCallback callback, void *callback_arg) {
-
+	/* Unused for now. */
+	(void) line_buffer;
+	(void) buffer;
+	(void) count;
+	(void) callback;
+	(void) callback_arg;
+	return true;
 }

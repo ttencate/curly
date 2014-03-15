@@ -2,6 +2,7 @@
 
 #include "constants.h"
 
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -24,7 +25,9 @@ static void respond_with_error(Handler *handler, int status, const char *descrip
 		"\r\n"
 		"%d %s",
 		status, description, status, description);
-	write(handler->fd, buf, strlen(buf));
+	if (write(handler->fd, buf, strlen(buf)) < 0) {
+		warn("failed to write error response");
+	}
 }
 
 bool handle_incoming_bytes(Handler *handler, char *buffer, int count) {
@@ -40,7 +43,9 @@ bool handle_incoming_bytes(Handler *handler, char *buffer, int count) {
 
 	if (handler->request.headers_complete) {
 		const char *buf = "HTTP/1.1 200 OK\r\n\r\nHello world!";
-		write(handler->fd, buf, strlen(buf));
+		if (write(handler->fd, buf, strlen(buf)) < 0) {
+			warn("failed to write response");
+		}
 		return false;
 	}
 
