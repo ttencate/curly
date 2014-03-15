@@ -28,6 +28,9 @@ Curly successfully and produce a binary in `src/curly`:
     ./configure
     make
 
+Use `./configure CC=colorgcc` if you have `colorgcc` installed and want
+colourful output.
+
 To run the unit tests:
 
     make check
