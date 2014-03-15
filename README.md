@@ -17,3 +17,6 @@ are available in Linux only.
 The name was chosen by `aspell -l en dump master | grep ^c | shuf | less`. When
 `curly` came up in the results, it seemed only too appropriate: it starts with
 C, C is a curly-braces language, and it contains "URL" in the middle.
+
+The code is under the three-clause BSD license; see the file `LICENSE` for
+details.
