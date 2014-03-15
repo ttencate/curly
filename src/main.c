@@ -77,11 +77,12 @@ int run() {
 		Handler handler;
 		init_handler(&handler, clientfd);
 
-		char buffer[REQUEST_BUFFER_SIZE];
 		ssize_t count;
 		for (;;) {
 			/* TODO timeouts */
-			count = read(clientfd, buffer, sizeof(buffer));
+			char *buffer = handler_get_write_ptr(&handler);
+			int size = handler_get_write_size(&handler);
+			count = read(clientfd, buffer, size);
 			if (count < 0) {
 				warn("read failed");
 				break;
@@ -90,13 +91,12 @@ int run() {
 				warnx("connection closed before full request received");
 				break;
 			}
-			if (!handle_incoming_bytes(&handler, buffer, count)) {
+			if (!handler_process_bytes(&handler, count)) {
 				break;
 			}
 		}
 
 		close(clientfd);
-		free_handler(&handler);
 	}
 
 	close(sockfd);

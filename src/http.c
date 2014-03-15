@@ -8,20 +8,11 @@
 
 void init_request(Request *request) {
 	memset(request, 0, sizeof(*request));
-	request->line_buffer = alloc_line_buffer();
-}
-
-void free_request(Request *request) {
-	free_line_buffer(request->line_buffer);
 }
 
 void init_parser(Parser *parser, Request *request) {
 	memset(parser, 0, sizeof(*parser));
-
 	parser->request = request;
-	parser->line_buffer_size = LINE_BUFFER_SIZE;
-	parser->line_buffer = malloc(parser->line_buffer_size);
-	parser->first_line = true;
 }
 
 static bool parse_request_line(Request *request, char *line) {
@@ -56,8 +47,8 @@ static bool parse_header_line(Request *request, char *line) {
 }
 
 static bool parse_line(Parser *parser, char *line) {
-	if (parser->first_line) {
-		parser->first_line = false;
+	if (!parser->seen_first_line) {
+		parser->seen_first_line = true;
 		return parse_request_line(parser->request, line);
 	} else if (!*line) {
 		parser->request->headers_complete = true;
@@ -67,33 +58,41 @@ static bool parse_line(Parser *parser, char *line) {
 	}
 }
 
-bool parse_request_bytes(Parser *parser, char *buffer, int count) {
+char *parser_get_write_ptr(Parser *parser) {
+	return &parser->request->buffer[parser->write_index];
+}
+
+int parser_get_write_size(Parser *parser) {
+	return MAX_REQUEST_SIZE - parser->write_index;
+}
+
+bool parser_parse_bytes(Parser *parser, int count) {
 	if (parser->error) {
 		return false;
 	}
 
-	for (; count > 0; --count, ++buffer) {
-		if (parser->next_free_index >= parser->line_buffer_size) {
-			parser->line_buffer_size *= 2;
-			parser->line_buffer = realloc(parser->line_buffer, parser->line_buffer_size);
-		}
-		char byte = *buffer;
-		if (!byte) {
+	int start_index = parser->write_index;
+	parser->write_index += count;
+	int end_index = parser->write_index;
+
+	for (int i = start_index; i < end_index; i++) {
+		char curr = parser->request->buffer[i];
+		if (!curr) {
 			/* HTTP headers cannot contain null bytes. Convenient, because
 			 * this lets us use null-terminated strings to parse them. */
 			parser->error = true;
 			break;
 		}
-		parser->line_buffer[parser->next_free_index++] = byte;
-		if (parser->next_free_index >= 2 && !strncmp("\r\n", parser->line_buffer + parser->next_free_index - 2, 2)) {
+		if (parser->prev_was_cr && curr == '\n') {
 			/* TODO line continuations */
-			parser->line_buffer[parser->next_free_index - 2] = '\0';
-			if (!parse_line(parser, parser->line_buffer)) {
+			parser->request->buffer[i - 1] = '\0';
+			if (!parse_line(parser, &parser->request->buffer[parser->line_start])) {
 				parser->error = true;
 				break;
 			}
-			parser->next_free_index = 0;
+			parser->line_start = i + 1;
 		}
+		parser->prev_was_cr = (curr == '\r');
 	}
 
 	return !parser->error;

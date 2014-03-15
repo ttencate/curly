@@ -1,7 +1,7 @@
 #ifndef HTTP_H_
 #define HTTP_H_
 
-#include "linebuffer.h"
+#include "constants.h"
 
 #include <stdbool.h>
 
@@ -12,11 +12,10 @@ typedef struct {
 	unsigned int http_major;
 	unsigned int http_minor;
 
-	LineBuffer *line_buffer;
+	char buffer[MAX_REQUEST_SIZE];
 } Request;
 
 void init_request(Request *request);
-void free_request(Request *request);
 
 typedef struct {
 	/* The request to write parsed data to. */
@@ -25,18 +24,18 @@ typedef struct {
 	/* Set to true upon parse error. */
 	bool error;
 
-	/* Line buffering. */
-	/* TODO: Optimize by keeping a linked list of buffers, and stick in \0 bytes
-	 * in the right places to save copying. */
-	char *line_buffer;
-	int line_buffer_size;
-	int next_free_index;
+	/* Position in request->buffer to write to. */
+	int write_index;
 
 	/* Parser internals. */
-	bool first_line;
+	bool seen_first_line;
+	int line_start;
+	bool prev_was_cr;
 } Parser;
 
 void init_parser(Parser *parser, Request *request);
-bool parse_request_bytes(Parser *parser, char *buffer, int count);
+char *parser_get_write_ptr(Parser *parser);
+int parser_get_write_size(Parser *parser);
+bool parser_parse_bytes(Parser *parser, int count);
 
 #endif
