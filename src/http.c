@@ -2,6 +2,7 @@
 
 #include "constants.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +27,8 @@ static bool parse_request_line(Request *request, char *line) {
 		return false;
 	}
 
-	request->method = strndup(line, space - line);
+	*space = '\0';
+	request->method = line;
 
 	line += space - line + 1;
 	space = strchr(space + 1, ' ');
@@ -34,10 +36,27 @@ static bool parse_request_line(Request *request, char *line) {
 		return false;
 	}
 
-	request->uri = strndup(line, space - line);
+	*space = '\0';
+	request->uri = line;
 
 	line += space - line + 1;
-	if (sscanf(line, "HTTP/%u.%u\r\n", &request->http_major, &request->http_minor) < 2) {
+	if (strncmp(line, "HTTP/", 5)) {
+		return false;
+	}
+	line += 5;
+
+	if (!isdigit(*line)) {
+		return false;
+	}
+	request->http_major = strtol(line, &line, 10);
+
+	if (*line != '.') {
+		return false;
+	}
+	line += 1;
+	request->http_minor = strtol(line, &line, 10);
+
+	if (*line) {
 		return false;
 	}
 

@@ -44,7 +44,8 @@ bool handler_process_bytes(Handler *handler, int count) {
 		return false;
 	}
 
-	if (handler->request.http_major > 0 && handler->request.http_major != 1) {
+	if ((handler->request.http_major > 0 && handler->request.http_major != 1) ||
+		(handler->request.http_minor > 0 && handler->request.http_minor > 1)) {
 		respond_with_error(handler, 505, "HTTP Version Not Supported");
 		return false;
 	}

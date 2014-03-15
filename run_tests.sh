@@ -10,6 +10,11 @@ function test_http_1_0_supported() {
 	assert_response_status 200
 }
 
+function test_http_1_2_unsupported() {
+	send_request "GET / HTTP/1.2\r\n\r\n"
+	assert_response_status 505
+}
+
 function test_http_2_0_unsupported() {
 	send_request "GET / HTTP/2.0\r\n\r\n"
 	assert_response_status 505
@@ -30,8 +35,18 @@ function test_invalid_http_version() {
 	assert_response_status 400
 }
 
-function test_incomplete_http_version() {
+function test_incomplete_http() {
 	send_request "GET / H\r\n\r\n"
+	assert_response_status 400
+}
+
+function test_incomplete_http_version() {
+	send_request "GET / HTTP/1\r\n\r\n"
+	assert_response_status 400
+}
+
+function test_trailing_garbage_in_request_line() {
+	send_request "GET / HTTP/1.1x\r\n\r\n"
 	assert_response_status 400
 }
 
