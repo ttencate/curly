@@ -99,8 +99,10 @@ bool parser_parse_bytes(Parser *parser, int count) {
 	int end_index = parser->write_index + count;
 	parser->write_index = end_index;
 
+	char *buffer = parser->request->buffer;
+
 	for (int i = start_index; i < end_index; i++) {
-		char curr = parser->request->buffer[i];
+		char curr = buffer[i];
 		if (!curr) {
 			/* HTTP headers cannot contain null bytes. Convenient, because
 			 * this lets us use null-terminated strings to parse them. */
@@ -110,7 +112,7 @@ bool parser_parse_bytes(Parser *parser, int count) {
 		if (parser->prev_was_cr && curr == '\n') {
 			/* TODO line continuations */
 			parser->request->buffer[i - 1] = '\0';
-			if (!parse_line(parser, &parser->request->buffer[parser->line_start])) {
+			if (!parse_line(parser, &buffer[parser->line_start])) {
 				parser->error = true;
 				break;
 			}
