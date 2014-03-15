@@ -8,6 +8,11 @@
 
 void init_request(Request *request) {
 	memset(request, 0, sizeof(*request));
+	request->buffer = malloc(MAX_REQUEST_SIZE);
+}
+
+void free_request(Request *request) {
+	free(request->buffer);
 }
 
 void init_parser(Parser *parser, Request *request) {
@@ -72,8 +77,8 @@ bool parser_parse_bytes(Parser *parser, int count) {
 	}
 
 	int start_index = parser->write_index;
-	parser->write_index += count;
-	int end_index = parser->write_index;
+	int end_index = parser->write_index + count;
+	parser->write_index = end_index;
 
 	for (int i = start_index; i < end_index; i++) {
 		char curr = parser->request->buffer[i];

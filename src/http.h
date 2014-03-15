@@ -12,10 +12,11 @@ typedef struct {
 	unsigned int http_major;
 	unsigned int http_minor;
 
-	char buffer[MAX_REQUEST_SIZE];
+	char *buffer;
 } Request;
 
 void init_request(Request *request);
+void free_request(Request *request);
 
 typedef struct {
 	/* The request to write parsed data to. */

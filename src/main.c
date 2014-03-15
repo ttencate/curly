@@ -96,6 +96,7 @@ int run() {
 			}
 		}
 
+		free_handler(&handler);
 		close(clientfd);
 	}
 
