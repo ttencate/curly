@@ -3,6 +3,8 @@
 #include "constants.h"
 
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,45 +14,90 @@ void init_parser(Parser *parser, Request *request) {
 	parser->request = request;
 }
 
+static bool is_separator(char c) {
+	/* TODO construct a LUT */
+	return strchr("()<>@,;:\\\"/[]?={} \t", c) != NULL;
+}
+
+static bool accept_token(char **line, char **token) {
+	char *start = *line;
+	for (; *line && !is_separator(**line); ++*line);
+	if (*line == start) {
+		return false;
+	}
+	*token = start;
+	return true;
+}
+
+static bool accept_non_space_string(char **line, char **string) {
+	char *start = *line;
+	while (**line && **line != ' ') {
+		(*line)++;
+	}
+	if (*line == start) {
+		return false;
+	}
+	*string = start;
+	return true;
+}
+
+static bool accept_literal_char(char **line, char c) {
+	if (**line != c) {
+		return false;
+	}
+	(*line)++;
+	return true;
+}
+
+static bool accept_literal_string(char **line, char *string) {
+	while (*string) {
+		if (**line != *string) {
+			return false;
+		}
+		(*line)++;
+		string++;
+	}
+	return true;
+}
+
+static bool accept_unsigned_int(char **line, unsigned int *i) {
+	if (!isdigit(**line)) {
+		return false;
+	}
+	char *end;
+	errno = 0;
+	long int li = strtol(*line, &end, 10);
+	if (errno) {
+		return false;
+	}
+	if (li < 0 || li > INT_MAX) {
+		return false;
+	}
+	*i = (unsigned int) li;
+	*line = end;
+	return true;
+}
+
+static bool accept_end_of_line(char **line) {
+	return **line == '\0';
+}
+
+static void terminate_string(char *line) {
+	*line = '\0';
+}
+
 static bool parse_request_line(Request *request, char *line) {
-	char *space = strchr(line, ' ');
-	if (!space) {
-		return false;
-	}
-
-	*space = '\0';
-	request->method = line;
-
-	line += space - line + 1;
-	space = strchr(space + 1, ' ');
-	if (!space) {
-		return false;
-	}
-
-	*space = '\0';
-	request->uri = line;
-
-	line += space - line + 1;
-	if (strncmp(line, "HTTP/", 5)) {
-		return false;
-	}
-	line += 5;
-
-	if (!isdigit(*line)) {
-		return false;
-	}
-	request->http_major = strtol(line, &line, 10);
-
-	if (*line != '.') {
-		return false;
-	}
-	line += 1;
-	request->http_minor = strtol(line, &line, 10);
-
-	if (*line) {
-		return false;
-	}
-
+	if (!accept_token(&line, &request->method)) return false;
+	if (!accept_literal_char(&line, ' ')) return false;
+	terminate_string(line - 1);
+	if (!accept_non_space_string(&line, &request->uri)) return false;
+	if (!accept_literal_char(&line, ' ')) return false;
+	terminate_string(line - 1);
+	if (!accept_literal_string(&line, "HTTP/")) return false;
+	if (!accept_unsigned_int(&line, &request->http_major)) return false;
+	if (!accept_literal_char(&line, '.')) return false;
+	if (!accept_unsigned_int(&line, &request->http_minor)) return false;
+	if (!accept_end_of_line(&line)) return false;
 	return true;
 }
 
