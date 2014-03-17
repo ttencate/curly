@@ -21,7 +21,7 @@ static bool is_separator(char c) {
 
 static bool accept_token(char **line, char **token) {
 	char *start = *line;
-	for (; *line && !is_separator(**line); ++*line);
+	for (; **line && !is_separator(**line); ++*line);
 	if (*line == start) {
 		return false;
 	}
