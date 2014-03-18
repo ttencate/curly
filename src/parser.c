@@ -19,6 +19,39 @@ static bool is_separator(char c) {
 	return strchr("()<>@,;:\\\"/[]?={} \t", c) != NULL;
 }
 
+static bool is_sp_ht(char c) {
+	return c == ' ' || c == '\t';
+}
+
+static bool accept_lws(char **line) {
+	if (**line == '\r') {
+		++*line;
+		if (**line != '\n') {
+			return false;
+		}
+		++*line;
+	}
+	if (!is_sp_ht(**line)) {
+		return false;
+	}
+	++*line;
+	for (; is_sp_ht(**line); ++*line);
+	return true;
+}
+
+static bool next_is_lws(char *line) {
+	return *line == '\r' || is_sp_ht(*line);
+}
+
+static bool accept_any_lws(char **line) {
+	while (next_is_lws(*line)) {
+		if (!accept_lws(line)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 static bool accept_token(char **line, char **token) {
 	char *start = *line;
 	for (; **line && !is_separator(**line); ++*line);
@@ -32,7 +65,7 @@ static bool accept_token(char **line, char **token) {
 static bool accept_non_space_string(char **line, char **string) {
 	char *start = *line;
 	while (**line && **line != ' ') {
-		(*line)++;
+		++*line;
 	}
 	if (*line == start) {
 		return false;
@@ -45,7 +78,7 @@ static bool accept_literal_char(char **line, char c) {
 	if (**line != c) {
 		return false;
 	}
-	(*line)++;
+	++*line;
 	return true;
 }
 
@@ -54,7 +87,7 @@ static bool accept_literal_string(char **line, char *string) {
 		if (**line != *string) {
 			return false;
 		}
-		(*line)++;
+		++*line;
 		string++;
 	}
 	return true;
@@ -104,7 +137,15 @@ static bool parse_request_line(Request *request, char *line) {
 static bool parse_header_line(Request *request, char *line) {
 	/* Unused for now. */
 	(void) request;
-	(void) line;
+	char *field_name;
+	if (!accept_token(&line, &field_name)) return false;
+	char *field_name_end = line;
+	if (!accept_any_lws(&line)) return false;
+	if (!accept_literal_char(&line, ':')) return false;
+	terminate_string(field_name_end);
+	if (!accept_any_lws(&line)) return false;
+	/* TODO the OCTETs making up the field-value and consisting of either *TEXT
+	 * or combinations of token, separators, and quoted-string */
 	return true;
 }
 
