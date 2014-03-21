@@ -1,11 +1,14 @@
 #include "hashtable.h"
 
 #include <check.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 static Hashtable ht;
 
 static const char *k = "foo", *l = "bar", *m = "biz";
-static const char *v = "Raphael", *w = "Leonardo", *x = "Donatello";
+static const char *v = "Raphael", *w = "Leonardo";
 
 static void setup() {
 	init_hashtable(&ht);
@@ -14,6 +17,8 @@ static void setup() {
 static void teardown() {
 	free_hashtable(&ht);
 }
+
+uint32_t hash(const char *key);
 
 START_TEST(empty)
 {
@@ -50,6 +55,23 @@ START_TEST(put_multiple)
 }
 END_TEST
 
+START_TEST(hash_distributes)
+{
+	int counts[10];
+	memset(counts, 0, sizeof(counts));
+	for (int i = 0; i < 1000; i++) {
+		char string[4];
+		sprintf(string, "%d", i);
+		int index = ((hash(string) % 10) + 10) % 10;
+		counts[index]++;
+	}
+	for (int i = 0; i < 10; i++) {
+		ck_assert_msg(counts[i] > 50, "bucket %d received %d elements", i, counts[i]);
+		ck_assert_msg(counts[i] < 150, "bucket %d received %d elements", i, counts[i]);
+	}
+}
+END_TEST
+
 Suite *hashtable_suite() {
 	Suite *s = suite_create("Hashtable");
 
@@ -58,6 +80,7 @@ Suite *hashtable_suite() {
 	tcase_add_test(tc_core, empty);
 	tcase_add_test(tc_core, put_then_get);
 	tcase_add_test(tc_core, put_multiple);
+	tcase_add_test(tc_core, hash_distributes);
 	suite_add_tcase(s, tc_core);
 
 	return s;
