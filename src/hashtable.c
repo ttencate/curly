@@ -88,6 +88,32 @@ static HashNode *find_node(Hashtable *ht, const char *key) {
 	return NULL;
 }
 
+static HashNode *prepend(Hashtable *ht, HashNode *n, const char *key) {
+	HashNode *old_next = n->next;
+	int i = bucket_index(ht, key);
+	n->next = ht->buckets[i];
+	ht->buckets[i] = n;
+	return old_next;
+}
+
+static void resize(Hashtable *ht, int bucket_count) {
+	HashNode **old_buckets = ht->buckets;
+	int old_bucket_count = ht->bucket_count;
+
+	ht->buckets = malloc(bucket_count * sizeof(HashNode*));
+	memset(ht->buckets, 0, bucket_count * sizeof(HashNode*));
+	ht->bucket_count = bucket_count;
+
+	for (int i = 0; i < old_bucket_count; i++) {
+		HashNode *n = old_buckets[i];
+		while (n) {
+			n = prepend(ht, n, n->key);
+		}
+	}
+
+	free(old_buckets);
+}
+
 void *hashtable_get(Hashtable *ht, const char *key) {
 	HashNode *n = find_node(ht, key);
 	if (!n) {
@@ -99,11 +125,11 @@ void *hashtable_get(Hashtable *ht, const char *key) {
 void hashtable_put(Hashtable *ht, const char *key, void *value) {
 	HashNode *n = find_node(ht, key);
 	if (!n) {
-		/* TODO maybe resize */
-		int i = bucket_index(ht, key);
+		if (1024 * ht->item_count / ht->bucket_count > 768) {
+			resize(ht, 2 * ht->bucket_count);
+		}
 		n = malloc(sizeof(HashNode));
-		n->next = ht->buckets[i];
-		ht->buckets[i] = n;
+		prepend(ht, n, key);
 		ht->item_count++;
 	}
 	n->key = key;

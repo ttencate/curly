@@ -55,14 +55,28 @@ START_TEST(put_multiple)
 }
 END_TEST
 
+START_TEST(resizes)
+{
+	char keys[1000][4];
+	for (int i = 0; i < 1000; i++) {
+		sprintf(keys[i], "%d", i);
+		hashtable_put(&ht, keys[i], (void*) (i % 2 == 0 ? v : w));
+	}
+	ck_assert_msg(ht.bucket_count == 2048, "bucket count is %d", ht.bucket_count);
+	for (int i = 0; i < 1000; i++) {
+		ck_assert_msg(hashtable_contains(&ht, keys[i]), "element %d not found", i);
+	}
+}
+END_TEST
+
 START_TEST(hash_distributes)
 {
 	int counts[10];
 	memset(counts, 0, sizeof(counts));
 	for (int i = 0; i < 1000; i++) {
-		char string[4];
-		sprintf(string, "%d", i);
-		int index = ((hash(string) % 10) + 10) % 10;
+		char key[4];
+		sprintf(key, "%d", i);
+		int index = ((hash(key) % 10) + 10) % 10;
 		counts[index]++;
 	}
 	for (int i = 0; i < 10; i++) {
@@ -81,6 +95,7 @@ Suite *hashtable_suite() {
 	tcase_add_test(tc_core, put_then_get);
 	tcase_add_test(tc_core, put_multiple);
 	tcase_add_test(tc_core, hash_distributes);
+	tcase_add_test(tc_core, resizes);
 	suite_add_tcase(s, tc_core);
 
 	return s;
