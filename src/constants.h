@@ -7,6 +7,9 @@
 /* Maximum size of HTTP request, including headers and double \r\n\r\n. */
 #define MAX_REQUEST_SIZE 4096
 
+/* Size of read buffer for file operations. */
+#define READ_BUFFER_SIZE 4096
+
 /* HTTP version supported. */
 #define HTTP_VERSION "1.1"
 

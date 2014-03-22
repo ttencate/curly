@@ -36,6 +36,16 @@ function test_get_hello() {
 	assert_response_body "Hello world!"
 }
 
+function test_get_goodbye() {
+	send_request "GET /goodbye.txt HTTP/1.1\r\n\r\n"
+	assert_response_body "Goodbye world!"
+}
+
+function test_get_nonexistent() {
+	send_request "GET /does_not_exist.txt HTTP/1.1\r\n\r\n"
+	assert_response_status 404
+}
+
 #-------------------------------------------------------------------------------
 # TEST HELPER FUNCTIONS
 #-------------------------------------------------------------------------------
@@ -47,14 +57,16 @@ function send_request() {
 function extract_body() {
 	local in_body=0
 	local line
-	while read line; do
-		if [[ line == "" ]]; then
-			in_body=1
-		elif (( $in_body )); then
+	while read -r; do
+		line="${REPLY%[$'\r']}"
+		if (( $in_body )); then
 			echo "$line"
+			continue
+		fi
+		if [[ -z "$line" ]]; then
+			in_body=1
 		fi
 	done
-	echo "$line"
 }
 
 function assert_response_status() {
@@ -70,6 +82,14 @@ function assert_response_header() {
 }
 
 function assert_response_body() {
+	od -tc $last_response
+	cp $last_response /tmp/foo
+	echo "FULL RESPONSE"
+	cat $last_response
+	echo "END"
+	echo "BEGIN BODY"
+	extract_body < $last_response
+	echo "END BODY"
 	diff <(echo "$1") <(extract_body < $last_response) >/dev/null || ( \
 		echo "Mismatch in response body:" ; \
 		diff -u <(echo "$1") <(extract_body < $last_response) ) | fail
