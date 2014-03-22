@@ -93,6 +93,32 @@ static bool accept_literal_string(char **line, char *string) {
 	return true;
 }
 
+static bool next_is_text(char **line) {
+	return next_is_lws(line) || (**line > 31 && **line != 127);
+}
+
+static bool accept_text(char **line) {
+	if (next_is_lws(line)) {
+		return accept_lws(line);
+	}
+	if (**line <= 31 || **line == 127) {
+		return false;
+	}
+	++*line;
+	return true;
+}
+
+/* Any OCTET except CTLs, but including LWS. */
+static bool accept_any_text(char **line, char **text) {
+	*text = *line;
+	while (next_is_text(line)) {
+		if (!accept_text(line)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 static bool accept_unsigned_int(char **line, unsigned int *i) {
 	if (!isdigit(**line)) {
 		return false;
@@ -144,8 +170,9 @@ static bool parse_header_line(Request *request, char *line) {
 	if (!accept_literal_char(&line, ':')) return false;
 	terminate_string(field_name_end);
 	if (!accept_any_lws(&line)) return false;
-	/* TODO the OCTETs making up the field-value and consisting of either *TEXT
-	 * or combinations of token, separators, and quoted-string */
+	/* TODO parse header values according to the type of the header
+	 * and store in dedicated Request fields. */
+	if (!accept_any_text(&line)) return false;
 	return true;
 }
 
