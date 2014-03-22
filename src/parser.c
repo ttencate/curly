@@ -93,12 +93,12 @@ static bool accept_literal_string(char **line, char *string) {
 	return true;
 }
 
-static bool next_is_text(char **line) {
-	return next_is_lws(line) || (**line > 31 && **line != 127);
+static bool next_is_text(char *line) {
+	return next_is_lws(line) || (*line > 31 && *line != 127);
 }
 
 static bool accept_text(char **line) {
-	if (next_is_lws(line)) {
+	if (next_is_lws(*line)) {
 		return accept_lws(line);
 	}
 	if (**line <= 31 || **line == 127) {
@@ -111,7 +111,7 @@ static bool accept_text(char **line) {
 /* Any OCTET except CTLs, but including LWS. */
 static bool accept_any_text(char **line, char **text) {
 	*text = *line;
-	while (next_is_text(line)) {
+	while (next_is_text(*line)) {
 		if (!accept_text(line)) {
 			return false;
 		}
@@ -145,18 +145,44 @@ static void terminate_string(char *line) {
 	*line = '\0';
 }
 
+static bool decode_uri(char *uri) {
+	char *write = uri;
+	for (const char *read = uri; *read; read++) {
+		if (*read == '%') {
+			read++;
+			/* TODO use a LUT with digit values */
+			if (!isxdigit(read[0]) || !isxdigit(read[1])) return false;
+			unsigned int c;
+			if (sscanf(read, "%2x", &c) < 1) return false;
+			if (c <= 0 || c > 0xff) return false;
+			read++;
+			*write = (char) ((unsigned char) c);
+		} else {
+			*write = *read;
+		}
+		write++;
+	}
+	terminate_string(write);
+	return true;
+}
+
 static bool parse_request_line(Request *request, char *line) {
 	if (!accept_token(&line, &request->method)) return false;
 	if (!accept_literal_char(&line, ' ')) return false;
 	terminate_string(line - 1);
+
 	if (!accept_non_space_string(&line, &request->uri)) return false;
 	if (!accept_literal_char(&line, ' ')) return false;
 	terminate_string(line - 1);
+	if (!decode_uri(request->uri)) return false;
+	/* TODO extract path from absolute URIs (section 3.2.1) */
+
 	if (!accept_literal_string(&line, "HTTP/")) return false;
 	if (!accept_unsigned_int(&line, &request->http_major)) return false;
 	if (!accept_literal_char(&line, '.')) return false;
 	if (!accept_unsigned_int(&line, &request->http_minor)) return false;
 	if (!accept_end_of_line(&line)) return false;
+
 	return true;
 }
 
@@ -172,7 +198,8 @@ static bool parse_header_line(Request *request, char *line) {
 	if (!accept_any_lws(&line)) return false;
 	/* TODO parse header values according to the type of the header
 	 * and store in dedicated Request fields. */
-	if (!accept_any_text(&line)) return false;
+	char *field_content;
+	if (!accept_any_text(&line, &field_content)) return false;
 	return true;
 }
 
