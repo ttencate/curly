@@ -7,6 +7,7 @@ typedef struct {
 	bool headers_complete;
 	char *method;
 	char *uri;
+	char *path;
 	unsigned int http_major;
 	unsigned int http_minor;
 

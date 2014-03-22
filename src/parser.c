@@ -176,6 +176,7 @@ static bool parse_request_line(Request *request, char *line) {
 	terminate_string(line - 1);
 	if (!decode_uri(request->uri)) return false;
 	/* TODO extract path from absolute URIs (section 3.2.1) */
+	request->path = request->uri;
 
 	if (!accept_literal_string(&line, "HTTP/")) return false;
 	if (!accept_unsigned_int(&line, &request->http_major)) return false;
