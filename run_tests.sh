@@ -20,6 +20,12 @@ function test_http_2_0_unsupported() {
 	assert_response_status 505
 }
 
+function test_post_unsupported() {
+	send_request "POST / HTTP/1.1\r\n\r\n"
+	assert_response_status 405
+	assert_response_header "Allow: GET, HEAD"
+}
+
 function test_empty_request() {
 	send_request "\r\n\r\n"
 	assert_response_status 400
@@ -37,6 +43,12 @@ function assert_response_status() {
 	head -n1 $last_response | grep -q " $1 " || ( \
 		echo "Expected first response line to contain $1, but was:" ; \
 		head -n1 $last_response ) | fail
+}
+
+function assert_response_header() {
+	grep -q -f <(echo "$1") $last_response || ( \
+		echo "Expected response header '$1', but got:" ; \
+		cat $last_response ) | fail
 }
 
 function fail() {
