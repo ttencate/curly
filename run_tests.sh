@@ -31,12 +31,30 @@ function test_empty_request() {
 	assert_response_status 400
 }
 
+function test_get_hello() {
+	send_request "GET /hello.txt HTTP/1.1\r\n\r\n"
+	assert_response_body "Hello world!"
+}
+
 #-------------------------------------------------------------------------------
 # TEST HELPER FUNCTIONS
 #-------------------------------------------------------------------------------
 
 function send_request() {
 	echo -ne "$1" | nc localhost ${port} > $last_response || exit 1
+}
+
+function extract_body() {
+	local in_body=0
+	local line
+	while read line; do
+		if [[ line == "" ]]; then
+			in_body=1
+		elif (( $in_body )); then
+			echo "$line"
+		fi
+	done
+	echo "$line"
 }
 
 function assert_response_status() {
@@ -49,6 +67,12 @@ function assert_response_header() {
 	grep -q -f <(echo "$1") $last_response || ( \
 		echo "Expected response header '$1', but got:" ; \
 		cat $last_response ) | fail
+}
+
+function assert_response_body() {
+	diff <(echo "$1") <(extract_body < $last_response) >/dev/null || ( \
+		echo "Mismatch in response body:" ; \
+		diff -u <(echo "$1") <(extract_body < $last_response) ) | fail
 }
 
 function fail() {
