@@ -17,6 +17,7 @@ typedef struct {
 	/* Filesystem directory that the / URL path maps to. Canonical, i.e. contains
 	 * no symlinks and no . and .. components. No trailing slash. */
 	char *root_path;
+	int root_path_length;
 
 	/* Print usage information and exit successfully. */
 	bool print_help;

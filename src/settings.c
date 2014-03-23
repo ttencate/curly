@@ -76,6 +76,7 @@ bool validate_settings(Settings *settings) {
 		return false;
 	}
 	settings->root_path = canonical_root_path;
+	settings->root_path_length = strlen(settings->root_path);
 	return true;
 }
 
