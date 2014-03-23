@@ -2,6 +2,7 @@
 
 #include "constants.h"
 #include "settings.h"
+#include "url.h"
 
 #include <err.h>
 #include <errno.h>
@@ -107,13 +108,12 @@ static void handle_request(Handler *handler) {
 
 	/* TODO check scheme/host/port in case of absolute URIs */
 
-	if (request->path[0] != '/') {
-		respond_with_error(handler, 400, "Bad Request", "");
-		return;
-	}
+	remove_dot_segments(request->path);
 
-	char *path = malloc(settings->root_path_length + strlen(request->path) + 1);
+	char *path = malloc(settings->root_path_length + 1 + strlen(request->path) + 1);
+	/* TODO repeated strcpy is inefficient */
 	strcpy(path, settings->root_path);
+	strcat(path, "/");
 	strcat(path, request->path);
 
 	char *canonical_path = realpath(path, NULL);

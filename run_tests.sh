@@ -73,14 +73,12 @@ function test_dot_dot_inside_root() {
 
 function test_dot_dot_outside_root() {
 	send_request "GET /../README.md HTTP/1.1\r\n\r\n"
-	assert_response_status 403
+	assert_response_status 404
 }
 
 function test_dot_dot_via_outside_root() {
-	# This leaks information about the server's directory structure.
-	# It should not be allowed.
 	send_request "GET /../test_root/hello.txt HTTP/1.1\r\n\r\n"
-	assert_response_status 403
+	assert_response_status 404
 }
 
 #-------------------------------------------------------------------------------
