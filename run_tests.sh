@@ -66,6 +66,23 @@ function test_dot_inside_root() {
 	assert_response_body "Hello world!"
 }
 
+function test_dot_dot_inside_root() {
+	send_request "GET /subdir/../hello.txt HTTP/1.1\r\n\r\n"
+	assert_response_body "Hello world!"
+}
+
+function test_dot_dot_outside_root() {
+	send_request "GET /../README.md HTTP/1.1\r\n\r\n"
+	assert_response_status 403
+}
+
+function test_dot_dot_via_outside_root() {
+	# This leaks information about the server's directory structure.
+	# It should not be allowed.
+	send_request "GET /../test_root/hello.txt HTTP/1.1\r\n\r\n"
+	assert_response_status 403
+}
+
 #-------------------------------------------------------------------------------
 # TEST HELPER FUNCTIONS
 #-------------------------------------------------------------------------------
