@@ -153,26 +153,6 @@ static void handle_request(Handler *handler) {
 	free(canonical_path);
 }
 
-static bool handler_process_bytes(Handler *handler, int count) {
-	if (!parser_parse_bytes(&handler->parser, count)) {
-		respond_with_error(handler, 400, "Bad Request", "");
-		return false;
-	}
-
-	if ((handler->request.http_major > 0 && handler->request.http_major != 1) ||
-		(handler->request.http_minor > 0 && handler->request.http_minor > 1)) {
-		respond_with_error(handler, 505, "HTTP Version Not Supported", "");
-		return false;
-	}
-
-	if (handler->request.headers_complete) {
-		handle_request(handler);
-		return false;
-	}
-
-	return true;
-}
-
 void handler_handle(Handler *handler) {
 	ssize_t count;
 	for (;;) {
@@ -188,7 +168,17 @@ void handler_handle(Handler *handler) {
 			warnx("connection closed before full request received");
 			break;
 		}
-		if (!handler_process_bytes(handler, count)) {
+		if (!parser_parse_bytes(&handler->parser, count)) {
+			respond_with_error(handler, 400, "Bad Request", "");
+			break;
+		}
+		if ((handler->request.http_major > 0 && handler->request.http_major != 1) ||
+			(handler->request.http_minor > 0 && handler->request.http_minor > 1)) {
+			respond_with_error(handler, 505, "HTTP Version Not Supported", "");
+			break;
+		}
+		if (handler->request.headers_complete) {
+			handle_request(handler);
 			break;
 		}
 	}
