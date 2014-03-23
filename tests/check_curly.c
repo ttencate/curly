@@ -5,6 +5,9 @@ Suite *hashtable_suite();
 Suite *parser_suite();
 
 int main(int argc, char **argv) {
+	(void) argc; /* unused */
+	(void) argv; /* unused */
+
 	Suite *s = suite_create("Curly");
 	SRunner *sr = srunner_create(s);
 	srunner_add_suite(sr, hashtable_suite());

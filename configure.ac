@@ -7,6 +7,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
+AC_PROG_CC_C99
 AC_PROG_RANLIB
 
 # Checks for libraries.
