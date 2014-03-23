@@ -7,6 +7,10 @@
 /* Maximum size of HTTP request, including headers and double \r\n\r\n. */
 #define MAX_REQUEST_SIZE 4096
 
+/* Maximum size of HTTP response headers, including status line and double
+ * \r\n\r\n. */
+#define MAX_RESPONSE_HEADERS_SIZE 4096
+
 /* Size of read buffer for file operations. */
 #define READ_BUFFER_SIZE 4096
 

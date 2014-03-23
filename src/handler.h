@@ -3,19 +3,19 @@
 
 #include "parser.h"
 #include "request.h"
+#include "response.h"
 
 #include <stdbool.h>
 
 typedef struct {
 	int fd;
-	Parser parser;
 	Request request;
+	Response response;
+	Parser parser;
 } Handler;
 
 void init_handler(Handler *handler, int fd);
 void free_handler(Handler *handler);
-char *handler_get_write_ptr(Handler *handler);
-int handler_get_write_size(Handler *handler);
 void handler_handle(Handler *handler);
 
 #endif
