@@ -1,5 +1,9 @@
 #!/bin/bash
 
+function unit_tests() {
+	make check
+}
+
 function test_http_1_0_supported() {
 	send_request "GET /hello.txt HTTP/1.0\r\n\r\n"
 	assert_response_status 200
@@ -142,6 +146,7 @@ function fail() {
 #-------------------------------------------------------------------------------
 
 function all_test_functions() {
+	echo unit_tests
 	declare -F | cut -d' ' -f3 | egrep '^test_'
 }
 
