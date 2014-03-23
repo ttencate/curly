@@ -4,5 +4,5 @@ endif
 SUBDIRS = src . $(MAYBE_TESTS)
 
 .PHONY: test
-test: src/curly check
-	./run_tests.sh
+test: check
+	make src/curly && ./run_tests.sh
