@@ -46,6 +46,26 @@ function test_get_nonexistent() {
 	assert_response_status 404
 }
 
+function test_symlink_within_root() {
+	send_request "GET /symlink_to_hello.txt HTTP/1.1\r\n\r\n"
+	assert_response_body "Hello world!"
+}
+
+function test_symlink_outside_root() {
+	send_request "GET /symlink_to_etc_passwd HTTP/1.1\r\n\r\n"
+	assert_response_status 403
+}
+
+function test_dangling_symlink() {
+	send_request "GET /symlink_to_nowhere HTTP/1.1\r\n\r\n"
+	assert_response_status 404
+}
+
+function test_dot_inside_root() {
+	send_request "GET /.///./hello.txt HTTP/1.1\r\n\r\n"
+	assert_response_body "Hello world!"
+}
+
 #-------------------------------------------------------------------------------
 # TEST HELPER FUNCTIONS
 #-------------------------------------------------------------------------------
@@ -71,8 +91,8 @@ function extract_body() {
 
 function assert_response_status() {
 	head -n1 $last_response | grep -q " $1 " || ( \
-		echo "Expected first response line to contain $1, but was:" ; \
-		head -n1 $last_response ) | fail
+		echo "Expected first response line to contain $1, but got:" ; \
+		cat $last_response ) | fail
 }
 
 function assert_response_header() {
@@ -82,17 +102,9 @@ function assert_response_header() {
 }
 
 function assert_response_body() {
-	od -tc $last_response
-	cp $last_response /tmp/foo
-	echo "FULL RESPONSE"
-	cat $last_response
-	echo "END"
-	echo "BEGIN BODY"
-	extract_body < $last_response
-	echo "END BODY"
 	diff <(echo "$1") <(extract_body < $last_response) >/dev/null || ( \
-		echo "Mismatch in response body:" ; \
-		diff -u <(echo "$1") <(extract_body < $last_response) ) | fail
+		echo "Expected response body '$1', but got:" ; \
+		cat $last_response ) | fail
 }
 
 function fail() {

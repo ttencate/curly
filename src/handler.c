@@ -30,7 +30,7 @@ static void respond_with_error(Handler *handler, int status, const char *descrip
 		"Content-type: text/plain\r\n"
 		"%s"
 		"\r\n"
-		"%d %s",
+		"%d %s\n",
 		status, description, headers, status, description);
 	if (write(handler->fd, buf, strlen(buf)) < 0) {
 		warn("failed to write error response");
@@ -45,29 +45,11 @@ int handler_get_write_size(Handler *handler) {
 	return parser_get_write_size(&handler->parser);
 }
 
-static void serve_file(Handler *handler, const char *path) {
-	/* TODO stat it first, to find out if it's a file, dir or something else */
-
-	int fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		switch (errno) {
-			case EACCES:
-				respond_with_error(handler, 403, "Forbidden", NULL);
-				return;
-			case ENOENT:
-				respond_with_error(handler, 404, "Not Found", NULL);
-				return;
-			default:
-				warn("failed to open %s", path);
-				respond_with_error(handler, 500, "Internal Server Error", NULL);
-				return;
-		}
-	}
-
+static void serve_fd(Handler *handler, int fd, const char *path) {
 	const char *buf = "HTTP/" HTTP_VERSION " 200 OK\r\n\r\n";
 	if (write(handler->fd, buf, strlen(buf)) < 0) {
 		warn("failed to write response");
-		goto close_fd;
+		return;
 	}
 
 	char buffer[READ_BUFFER_SIZE];
@@ -75,20 +57,41 @@ static void serve_file(Handler *handler, const char *path) {
 	while ((bytes_read = read(fd, buffer, READ_BUFFER_SIZE)) != 0) {
 		if (bytes_read < 0) {
 			warn("read from %s failed", path);
-			goto close_fd;
+			return;
 		}
 		int bytes_pending = bytes_read;
 		do {
 			int bytes_written = write(handler->fd, &buffer[bytes_read - bytes_pending], bytes_pending);
 			if (bytes_written < 0) {
 				warn("write failed for %s", path);
-				goto close_fd;
+				return;
 			}
 			bytes_pending -= bytes_written;
 		} while (bytes_pending > 0);
 	}
+}
 
-close_fd:
+static void serve_file(Handler *handler, const char *path) {
+	/* TODO stat it first, to find out if it's a file, dir or something else */
+
+	int fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		switch (errno) {
+			case EACCES:
+				respond_with_error(handler, 403, "Forbidden", "");
+				return;
+			case ENOENT:
+				respond_with_error(handler, 404, "Not Found", "");
+				return;
+			default:
+				warn("failed to open %s", path);
+				respond_with_error(handler, 500, "Internal Server Error", "");
+				return;
+		}
+	}
+
+	serve_fd(handler, fd, path);
+
 	close(fd);
 }
 
@@ -105,19 +108,39 @@ static void handle_request(Handler *handler) {
 	/* TODO check scheme/host/port in case of absolute URIs */
 
 	if (request->path[0] != '/') {
-		respond_with_error(handler, 400, "Bad Request", NULL);
+		respond_with_error(handler, 400, "Bad Request", "");
 		return;
 	}
 
-	/* TODO cache strlen(root_path) globally */
-	char *path = malloc(strlen(settings->root_path) + strlen(request->path) + 1);
+	char *path = malloc(settings->root_path_length + strlen(request->path) + 1);
 	strcpy(path, settings->root_path);
 	strcat(path, request->path);
 
-	/* TODO resolve absolute, check if under root */
-
-	serve_file(handler, path);
+	char *canonical_path = realpath(path, NULL);
+	int err = errno;
 	free(path);
+	if (!canonical_path) {
+		switch (err) {
+			case ENOENT:
+				respond_with_error(handler, 404, "Not Found", "");
+				return;
+			case EACCES:
+				respond_with_error(handler, 403, "Forbidden", "");
+				return;
+			default:
+				warn("could not resolve path %s", canonical_path);
+				respond_with_error(handler, 500, "Internal Server Error", "");
+				return;
+		}
+	}
+
+	if (strncmp(settings->root_path, canonical_path, settings->root_path_length)) {
+		respond_with_error(handler, 403, "Forbidden", "");
+	} else {
+		serve_file(handler, canonical_path);
+	}
+
+	free(canonical_path);
 }
 
 bool handler_process_bytes(Handler *handler, int count) {
