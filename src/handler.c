@@ -47,13 +47,25 @@ int handler_get_write_size(Handler *handler) {
 }
 
 static void serve_fd(Handler *handler, int fd, const char *path) {
+	char buffer[READ_BUFFER_SIZE];
+	if (read(fd, buffer, 0) < 0) {
+		switch (errno) {
+			case EISDIR:
+				respond_with_error(handler, 403, "Forbidden", "");
+				return;
+			default:
+				warn("probe read from %s failed", path);
+				respond_with_error(handler, 500, "Internal Server Error", "");
+				return;
+		}
+	}
+
 	const char *buf = "HTTP/" HTTP_VERSION " 200 OK\r\n\r\n";
 	if (write(handler->fd, buf, strlen(buf)) < 0) {
 		warn("failed to write response");
 		return;
 	}
 
-	char buffer[READ_BUFFER_SIZE];
 	int bytes_read;
 	while ((bytes_read = read(fd, buffer, READ_BUFFER_SIZE)) != 0) {
 		if (bytes_read < 0) {
@@ -73,8 +85,6 @@ static void serve_fd(Handler *handler, int fd, const char *path) {
 }
 
 static void serve_file(Handler *handler, const char *path) {
-	/* TODO stat it first, to find out if it's a file, dir or something else */
-
 	int fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		switch (errno) {

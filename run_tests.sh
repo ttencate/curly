@@ -1,27 +1,22 @@
 #!/bin/bash
 
-function test_get_root() {
-	send_request "GET / HTTP/1.1\r\n\r\n"
-	assert_response_status 200
-}
-
 function test_http_1_0_supported() {
-	send_request "GET / HTTP/1.0\r\n\r\n"
+	send_request "GET /hello.txt HTTP/1.0\r\n\r\n"
 	assert_response_status 200
 }
 
 function test_http_1_2_unsupported() {
-	send_request "GET / HTTP/1.2\r\n\r\n"
+	send_request "GET /hello.txt HTTP/1.2\r\n\r\n"
 	assert_response_status 505
 }
 
 function test_http_2_0_unsupported() {
-	send_request "GET / HTTP/2.0\r\n\r\n"
+	send_request "GET /hello.txt HTTP/2.0\r\n\r\n"
 	assert_response_status 505
 }
 
 function test_post_unsupported() {
-	send_request "POST / HTTP/1.1\r\n\r\n"
+	send_request "POST /hello.txt HTTP/1.1\r\n\r\n"
 	assert_response_status 405
 	assert_response_header "Allow: GET, HEAD"
 }
@@ -44,6 +39,21 @@ function test_get_goodbye() {
 function test_get_nonexistent() {
 	send_request "GET /does_not_exist.txt HTTP/1.1\r\n\r\n"
 	assert_response_status 404
+}
+
+function test_get_root() {
+	send_request "GET / HTTP/1.1\r\n\r\n"
+	assert_response_status 403
+}
+
+function test_get_subdir_without_slash() {
+	send_request "GET /subdir HTTP/1.1\r\n\r\n"
+	assert_response_status 403
+}
+
+function test_get_subdir_with_slash() {
+	send_request "GET /subdir/ HTTP/1.1\r\n\r\n"
+	assert_response_status 403
 }
 
 function test_symlink_within_root() {
