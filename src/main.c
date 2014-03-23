@@ -112,6 +112,9 @@ int main(int argc, char **argv) {
 		print_usage(argv[0]);
 		return EX_USAGE;
 	}
+	if (!validate_settings(&the_settings)) {
+		return EX_UNAVAILABLE;
+	}
 	settings = &the_settings;
 
 	if (settings->print_help) {

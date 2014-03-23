@@ -8,6 +8,8 @@
 #include <string.h>
 #include <unistd.h>
 
+Settings const *settings;
+
 void init_settings(Settings *settings) {
 	settings->address = strdup("0.0.0.0");
 	settings->port = 8080;
@@ -64,6 +66,16 @@ bool parse_command_line(int argc, char **argv, Settings *settings) {
 		warnx("unexpected extra command line argument: %s", argv[optind]);
 		return false;
 	}
+	return true;
+}
+
+bool validate_settings(Settings *settings) {
+	char *canonical_root_path = realpath(settings->root_path, NULL);
+	if (!canonical_root_path) {
+		warn("failed to resolve %s", settings->root_path);
+		return false;
+	}
+	settings->root_path = canonical_root_path;
 	return true;
 }
 
