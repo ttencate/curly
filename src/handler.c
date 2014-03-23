@@ -153,7 +153,7 @@ static void handle_request(Handler *handler) {
 	free(canonical_path);
 }
 
-bool handler_process_bytes(Handler *handler, int count) {
+static bool handler_process_bytes(Handler *handler, int count) {
 	if (!parser_parse_bytes(&handler->parser, count)) {
 		respond_with_error(handler, 400, "Bad Request", "");
 		return false;
@@ -171,4 +171,25 @@ bool handler_process_bytes(Handler *handler, int count) {
 	}
 
 	return true;
+}
+
+void handler_handle(Handler *handler) {
+	ssize_t count;
+	for (;;) {
+		/* TODO timeouts */
+		char *buffer = handler_get_write_ptr(handler);
+		int size = handler_get_write_size(handler);
+		count = read(handler->fd, buffer, size);
+		if (count < 0) {
+			warn("read failed");
+			break;
+		}
+		if (count == 0) {
+			warnx("connection closed before full request received");
+			break;
+		}
+		if (!handler_process_bytes(handler, count)) {
+			break;
+		}
+	}
 }

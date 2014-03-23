@@ -76,26 +76,7 @@ int run() {
 
 		Handler handler;
 		init_handler(&handler, clientfd);
-
-		ssize_t count;
-		for (;;) {
-			/* TODO timeouts */
-			char *buffer = handler_get_write_ptr(&handler);
-			int size = handler_get_write_size(&handler);
-			count = read(clientfd, buffer, size);
-			if (count < 0) {
-				warn("read failed");
-				break;
-			}
-			if (count == 0) {
-				warnx("connection closed before full request received");
-				break;
-			}
-			if (!handler_process_bytes(&handler, count)) {
-				break;
-			}
-		}
-
+		handler_handle(&handler);
 		free_handler(&handler);
 		close(clientfd);
 	}
