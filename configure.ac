@@ -12,15 +12,16 @@ AC_PROG_RANLIB
 # Checks for libraries.
 
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h unistd.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_HEADER_STDBOOL
 AC_TYPE_SSIZE_T
+AC_TYPE_UINT32_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([memset socket strchr strdup strtol])
+AC_CHECK_FUNCS([memset realpath socket strchr strdup strtol])
 
 AM_INIT_AUTOMAKE([foreign 1.11.3 -Wall -Werror])
 AC_ARG_WITH([check], AS_HELP_STRING([--without-check], [Disable building unit tests; use in case check is not available on your system]), [], [with_check=yes])
