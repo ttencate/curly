@@ -1,6 +1,6 @@
 noinst_LIBRARIES = libcurly.a
 libcurly_a_SOURCES = constants.h handler.c handler.h hashtable.c hashtable.h parser.c parser.h request.c request.h settings.c settings.h
-libcurly_a_CFLAGS = -std=c99 -pedantic -Wall -Wextra -Werror
+libcurly_a_CFLAGS = -pedantic -Wall -Wextra -Werror
 
 LDADD = libcurly.a
 bin_PROGRAMS = curly
