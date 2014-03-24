@@ -22,6 +22,7 @@ typedef struct {
 } Parser;
 
 void parser_init(Parser *parser, Request *request);
+void parser_destroy(Parser *parser);
 char *parser_get_write_ptr(Parser *parser);
 int parser_get_write_size(Parser *parser);
 bool parser_parse_bytes(Parser *parser, int count);

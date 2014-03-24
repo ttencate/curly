@@ -14,6 +14,10 @@ void parser_init(Parser *parser, Request *request) {
 	parser->request = request;
 }
 
+void parser_destroy(Parser *parser) {
+	(void) parser; /* unused */
+}
+
 static bool is_separator(char c) {
 	/* TODO construct a LUT */
 	return strchr("()<>@,;:\\\"/[]?={} \t", c) != NULL;

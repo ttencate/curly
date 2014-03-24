@@ -16,6 +16,7 @@ static void setup() {
 }
 
 static void teardown() {
+	parser_destroy(parser);
 	free(parser);
 	request_destroy(request);
 	free(request);

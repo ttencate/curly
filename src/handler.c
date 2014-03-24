@@ -22,8 +22,9 @@ void handler_init(Handler *handler, int fd) {
 }
 
 void handler_destroy(Handler *handler) {
-	request_destroy(&handler->request);
+	parser_destroy(&handler->parser);
 	response_destroy(&handler->response);
+	request_destroy(&handler->request);
 }
 
 static char *handler_get_write_ptr(Handler *handler) {
