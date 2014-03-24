@@ -68,9 +68,7 @@ static void serve_file(Handler *handler, const char *path) {
 static void handle_request(Handler *handler) {
 	Request *request = &handler->request;
 
-	/* TODO handle HEAD requests as per 5.1.1
-	 * (and make sure error response has no body either) */
-	if (strcmp(request->method, "GET")) {
+	if (strcmp(request->method, "GET") && strcmp(request->method, "HEAD")) {
 		response_set_failure(&handler->response, STATUS_METHOD_NOT_ALLOWED);
 		response_set_header(&handler->response, "Allow", "GET, HEAD");
 		return;
@@ -139,6 +137,10 @@ void handler_handle(Handler *handler) {
 			break;
 		}
 	}
+
 	if (!response_send_headers(response, handler->fd)) return;
-	if (!response_send_body(response, handler->fd)) return;
+
+	if (request->method && strcmp(request->method, "HEAD")) {
+		if (!response_send_body(response, handler->fd)) return;
+	}
 }

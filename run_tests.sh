@@ -28,12 +28,12 @@ function test_empty_request() {
 
 function test_get_hello() {
 	send_request "GET /hello.txt HTTP/1.1\r\n\r\n"
-	assert_response_body "Hello world!"
+	echo "Hello world!" | assert_response_body
 }
 
 function test_get_goodbye() {
 	send_request "GET /goodbye.txt HTTP/1.1\r\n\r\n"
-	assert_response_body "Goodbye world!"
+	echo "Goodbye world!" | assert_response_body
 }
 
 function test_get_nonexistent() {
@@ -51,6 +51,18 @@ function test_get_subdir_without_slash() {
 	assert_response_status 403
 }
 
+function test_head_hello() {
+	send_request "HEAD /hello.txt HTTP/1.1\r\n\r\n"
+	assert_response_status 200
+	echo -n "" | assert_response_body
+}
+
+function test_head_nonexistent() {
+	send_request "HEAD /does_not_exist.txt HTTP/1.1\r\n\r\n"
+	assert_response_status 404
+	echo -n "" | assert_response_body
+}
+
 function test_get_subdir_with_slash() {
 	send_request "GET /subdir/ HTTP/1.1\r\n\r\n"
 	assert_response_status 403
@@ -58,7 +70,7 @@ function test_get_subdir_with_slash() {
 
 function test_symlink_within_root() {
 	send_request "GET /symlink_to_hello.txt HTTP/1.1\r\n\r\n"
-	assert_response_body "Hello world!"
+	echo "Hello world!" | assert_response_body
 }
 
 function test_symlink_outside_root() {
@@ -73,12 +85,12 @@ function test_dangling_symlink() {
 
 function test_dot_inside_root() {
 	send_request "GET /.///./hello.txt HTTP/1.1\r\n\r\n"
-	assert_response_body "Hello world!"
+	echo "Hello world!" | assert_response_body
 }
 
 function test_dot_dot_inside_root() {
 	send_request "GET /subdir/../hello.txt HTTP/1.1\r\n\r\n"
-	assert_response_body "Hello world!"
+	echo "Hello world!" | assert_response_body
 }
 
 function test_dot_dot_outside_root() {
@@ -127,7 +139,7 @@ function assert_response_header() {
 }
 
 function assert_response_body() {
-	diff <(echo "$1") <(extract_body < $last_response) >/dev/null || ( \
+	diff - <(extract_body < $last_response) >/dev/null || ( \
 		echo "Expected response body '$1', but got:" ; \
 		cat $last_response ) | fail
 }
@@ -165,7 +177,6 @@ port=8081
 echo -n "Starting server... "
 src/curly -r test_root -p ${port} &
 curly_pid=$!
-disown
 echo "pid $curly_pid"
 trap atexit EXIT
 
