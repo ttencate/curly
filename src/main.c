@@ -41,10 +41,11 @@ static int open_listening_socket() {
 	int optval = settings->reuse_addr;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))) {
 		warn("could not set socket options");
+		close(sockfd);
 		return -1;
 	}
 
-	if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr))) {
+	if (bind(sockfd, (struct sockaddr*) &addr, sizeof(addr))) {
 		warn("could not bind socket");
 		close(sockfd);
 		return -1;
