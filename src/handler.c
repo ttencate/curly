@@ -27,14 +27,6 @@ void handler_destroy(Handler *handler) {
 	request_destroy(&handler->request);
 }
 
-static char *handler_get_write_ptr(Handler *handler) {
-	return parser_get_write_ptr(&handler->parser);
-}
-
-static int handler_get_write_size(Handler *handler) {
-	return parser_get_write_size(&handler->parser);
-}
-
 static void serve_file(Handler *handler, const char *path) {
 	int fd = open(path, O_RDONLY);
 	if (fd < 0) {
@@ -126,8 +118,8 @@ void handler_handle(Handler *handler) {
 	ssize_t count;
 	for (;;) {
 		/* TODO timeouts */
-		char *buffer = handler_get_write_ptr(handler);
-		int size = handler_get_write_size(handler);
+		char *buffer = parser_get_write_ptr(&handler->parser);
+		int size = parser_get_write_size(&handler->parser);
 		if (size <= 0) {
 			response_set_failure(response, STATUS_REQUEST_ENTITY_TOO_LARGE);
 			break;
