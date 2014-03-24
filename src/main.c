@@ -17,7 +17,7 @@
 
 static int sockfd = 0;
 
-int open_listening_socket() {
+static int open_listening_socket() {
 	struct protoent *tcp_proto = getprotobyname("tcp");
 	if (!tcp_proto) {
 		return -1;
@@ -59,7 +59,7 @@ int open_listening_socket() {
 	return sockfd;
 }
 
-int run() {
+static int run() {
 	sockfd = open_listening_socket();
 	if (sockfd == -1) {
 		return EX_UNAVAILABLE;
