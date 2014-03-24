@@ -22,8 +22,8 @@ typedef struct {
 	int item_count;
 } Hashtable;
 
-void init_hashtable(Hashtable *ht);
-void free_hashtable(Hashtable *ht);
+void hashtable_init(Hashtable *ht);
+void hashtable_destroy(Hashtable *ht);
 
 void *hashtable_get(Hashtable *ht, const char *key);
 void hashtable_put(Hashtable *ht, const char *key, void *value);

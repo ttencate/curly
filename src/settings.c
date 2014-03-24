@@ -10,7 +10,7 @@
 
 Settings const *settings;
 
-void init_settings(Settings *settings) {
+void settings_init(Settings *settings) {
 	settings->address = strdup("0.0.0.0");
 	settings->port = 8080;
 	settings->reuse_addr = true;
@@ -18,20 +18,12 @@ void init_settings(Settings *settings) {
 	settings->print_help = false;
 }
 
-void print_usage(char const *program) {
-	printf(
-		"Usage: %s [OPTION]...\n"
-		"A simple experimental HTTP server.\n"
-		"\n"
-		"Options (with default values shown):\n"
-		"  -h              show this help\n"
-		"  -a 0.0.0.0      IP address to bind to\n"
-		"  -p 8080         port number to listen on\n"
-		"  -r .            directory to serve from\n",
-		program);
+void settings_destroy(Settings *settings) {
+	free(settings->address);
+	free(settings->root_path);
 }
 
-bool parse_command_line(int argc, char **argv, Settings *settings) {
+bool settings_parse_command_line(Settings *settings, int argc, char **argv) {
 	char opt;
 	while ((opt = getopt(argc, argv, "a:hp:r:")) != -1) {
 		switch (opt) {
@@ -69,7 +61,7 @@ bool parse_command_line(int argc, char **argv, Settings *settings) {
 	return true;
 }
 
-bool validate_settings(Settings *settings) {
+bool settings_validate(Settings *settings) {
 	char *canonical_root_path = realpath(settings->root_path, NULL);
 	if (!canonical_root_path) {
 		warn("failed to resolve %s", settings->root_path);
@@ -80,7 +72,15 @@ bool validate_settings(Settings *settings) {
 	return true;
 }
 
-void free_settings(Settings *settings) {
-	free(settings->address);
-	free(settings->root_path);
+void print_usage(char const *program) {
+	printf(
+		"Usage: %s [OPTION]...\n"
+		"A simple experimental HTTP server.\n"
+		"\n"
+		"Options (with default values shown):\n"
+		"  -h              show this help\n"
+		"  -a 0.0.0.0      IP address to bind to\n"
+		"  -p 8080         port number to listen on\n"
+		"  -r .            directory to serve from\n",
+		program);
 }

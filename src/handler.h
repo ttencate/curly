@@ -14,8 +14,8 @@ typedef struct {
 	Parser parser;
 } Handler;
 
-void init_handler(Handler *handler, int fd);
-void free_handler(Handler *handler);
+void handler_init(Handler *handler, int fd);
+void handler_destroy(Handler *handler);
 void handler_handle(Handler *handler);
 
 #endif

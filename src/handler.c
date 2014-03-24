@@ -14,16 +14,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void init_handler(Handler *handler, int fd) {
+void handler_init(Handler *handler, int fd) {
 	handler->fd = fd;
-	init_request(&handler->request);
-	init_response(&handler->response);
-	init_parser(&handler->parser, &handler->request);
+	request_init(&handler->request);
+	response_init(&handler->response);
+	parser_init(&handler->parser, &handler->request);
 }
 
-void free_handler(Handler *handler) {
-	free_request(&handler->request);
-	free_response(&handler->response);
+void handler_destroy(Handler *handler) {
+	request_destroy(&handler->request);
+	response_destroy(&handler->response);
 }
 
 static char *handler_get_write_ptr(Handler *handler) {

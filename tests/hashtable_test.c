@@ -11,11 +11,11 @@ static const char *k = "foo", *l = "bar", *m = "biz";
 static const char *v = "Raphael", *w = "Leonardo";
 
 static void setup() {
-	init_hashtable(&ht);
+	hashtable_init(&ht);
 }
 
 static void teardown() {
-	free_hashtable(&ht);
+	hashtable_destroy(&ht);
 }
 
 uint32_t hash(const char *key);

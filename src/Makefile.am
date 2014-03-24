@@ -5,3 +5,4 @@ libcurly_a_CFLAGS = -pedantic -Wall -Wextra -Werror
 LDADD = libcurly.a
 bin_PROGRAMS = curly
 curly_SOURCES = main.c
+curly_CFLAGS = -pedantic -Wall -Wextra -Werror

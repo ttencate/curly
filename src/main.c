@@ -75,9 +75,9 @@ int run() {
 		}
 
 		Handler handler;
-		init_handler(&handler, clientfd);
+		handler_init(&handler, clientfd);
 		handler_handle(&handler);
-		free_handler(&handler);
+		handler_destroy(&handler);
 		close(clientfd);
 	}
 
@@ -87,13 +87,13 @@ int run() {
 
 int main(int argc, char **argv) {
 	Settings the_settings;
-	init_settings(&the_settings);
-	if (!parse_command_line(argc, argv, &the_settings)) {
+	settings_init(&the_settings);
+	if (!settings_parse_command_line(&the_settings, argc, argv)) {
 		printf("\n");
 		print_usage(argv[0]);
 		return EX_USAGE;
 	}
-	if (!validate_settings(&the_settings)) {
+	if (!settings_validate(&the_settings)) {
 		return EX_UNAVAILABLE;
 	}
 	settings = &the_settings;
@@ -105,6 +105,6 @@ int main(int argc, char **argv) {
 
 	int exit_code = run();
 
-	free_settings(&the_settings);
+	settings_destroy(&the_settings);
 	return exit_code;
 }

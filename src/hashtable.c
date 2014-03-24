@@ -4,14 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-void init_hashtable(Hashtable *ht) {
+void hashtable_init(Hashtable *ht) {
 	ht->bucket_count = 16;
 	ht->buckets = malloc(ht->bucket_count * sizeof(HashNode*));
 	memset(ht->buckets, 0, ht->bucket_count * sizeof(HashNode*));
 	ht->item_count = 0;
 }
 
-void free_hashtable(Hashtable *ht) {
+void hashtable_destroy(Hashtable *ht) {
 	for (int i = 0; i < ht->bucket_count; i++) {
 		HashNode *n = ht->buckets[i];
 		while (n) {

@@ -14,7 +14,7 @@ typedef struct {
 	char *buffer;
 } Request;
 
-void init_request(Request *request);
-void free_request(Request *request);
+void request_init(Request *request);
+void request_destroy(Request *request);
 
 #endif

@@ -28,8 +28,8 @@ typedef struct {
 	int body_buffer_size;
 } Response;
 
-void init_response(Response *response);
-void free_response(Response *response);
+void response_init(Response *response);
+void response_destroy(Response *response);
 
 bool response_set_status(Response *response, int status);
 bool response_set_failure(Response *response, int status);

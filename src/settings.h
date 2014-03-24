@@ -25,10 +25,11 @@ typedef struct {
 
 extern Settings const *settings;
 
-void init_settings(Settings *settings);
+void settings_init(Settings *settings);
+void settings_destroy(Settings *settings);
+bool settings_parse_command_line(Settings *settings, int argc, char **argv);
+bool settings_validate(Settings *settings);
+
 void print_usage();
-bool parse_command_line(int argc, char **argv, Settings *settings);
-bool validate_settings(Settings *settings);
-void free_settings(Settings *settings);
 
 #endif

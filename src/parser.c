@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void init_parser(Parser *parser, Request *request) {
+void parser_init(Parser *parser, Request *request) {
 	memset(parser, 0, sizeof(*parser));
 	parser->request = request;
 }

@@ -9,15 +9,15 @@ static Parser *parser;
 
 static void setup() {
 	request = malloc(sizeof(Request));
-	init_request(request);
+	request_init(request);
 
 	parser = malloc(sizeof(Parser));
-	init_parser(parser, request);
+	parser_init(parser, request);
 }
 
 static void teardown() {
 	free(parser);
-	free_request(request);
+	request_destroy(request);
 	free(request);
 }
 

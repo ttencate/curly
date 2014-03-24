@@ -7,11 +7,11 @@
 #include <string.h>
 #include <unistd.h>
 
-void init_response(Response *response) {
+void response_init(Response *response) {
 	memset(response, 0, sizeof(Response));
 }
 
-void free_response(Response *response) {
+void response_destroy(Response *response) {
 	free(response->body_buffer);
 	if (response->body_fd) close(response->body_fd);
 }

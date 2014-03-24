@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-void init_request(Request *request) {
+void request_init(Request *request) {
 	memset(request, 0, sizeof(*request));
 	request->buffer = malloc(MAX_REQUEST_SIZE);
 }
 
-void free_request(Request *request) {
+void request_destroy(Request *request) {
 	free(request->buffer);
 }
