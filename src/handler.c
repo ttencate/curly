@@ -27,40 +27,42 @@ void handler_destroy(Handler *handler) {
 	request_destroy(&handler->request);
 }
 
+static void set_failure_from_errno(Response *response, int err, const char *error_fmt, const char *path) {
+	switch (err) {
+		case EACCES:
+			response_set_failure(response, STATUS_FORBIDDEN);
+			break;
+		case ENOENT:
+			response_set_failure(response, STATUS_NOT_FOUND);
+			break;
+		default:
+			warn(error_fmt, path);
+			response_set_failure(response, STATUS_INTERNAL_SERVER_ERROR);
+			break;
+	}
+}
+
 static void serve_file(Handler *handler, const char *path) {
-	int fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		switch (errno) {
-			case EACCES:
-				response_set_failure(&handler->response, STATUS_FORBIDDEN);
-				return;
-			case ENOENT:
-				response_set_failure(&handler->response, STATUS_NOT_FOUND);
-				return;
-			default:
-				warn("failed to open %s", path);
-				response_set_failure(&handler->response, STATUS_INTERNAL_SERVER_ERROR);
-				return;
-		}
+	struct stat stat_buf;
+	if (stat(path, &stat_buf)) {
+		set_failure_from_errno(&handler->response, errno, "could not stat %s", path);
+		return;
 	}
 
-	char buffer;
-	if (read(fd, &buffer, 0) < 0) {
-		switch (errno) {
-			case EISDIR:
-				response_set_failure(&handler->response, STATUS_FORBIDDEN);
-				break;
-			default:
-				warn("probe read from %s failed", path);
-				response_set_failure(&handler->response, STATUS_INTERNAL_SERVER_ERROR);
-				break;
-		}
-		close(fd);
+	if (S_ISDIR(stat_buf.st_mode)) {
+		response_set_failure(&handler->response, STATUS_FORBIDDEN);
+		return;
+	}
+
+	int fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		set_failure_from_errno(&handler->response, errno, "could not open %s", path);
 		return;
 	}
 
 	response_set_status(&handler->response, STATUS_OK);
 	handler->response.body_fd = fd;
+	handler->response.body_size = stat_buf.st_size;
 }
 
 static void handle_request(Handler *handler) {
@@ -88,18 +90,8 @@ static void handle_request(Handler *handler) {
 	int err = errno;
 	free(path);
 	if (!canonical_path) {
-		switch (err) {
-			case ENOENT:
-				response_set_failure(&handler->response, STATUS_NOT_FOUND);
-				return;
-			case EACCES:
-				response_set_failure(&handler->response, STATUS_FORBIDDEN);
-				return;
-			default:
-				warn("could not resolve path %s", canonical_path);
-				response_set_failure(&handler->response, STATUS_INTERNAL_SERVER_ERROR);
-				return;
-		}
+		set_failure_from_errno(&handler->response, err, "could not resolve path %s", path);
+		return;
 	}
 
 	if (strncmp(settings->root_path, canonical_path, settings->root_path_length)) {

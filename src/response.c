@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/sendfile.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 void response_init(Response *response) {
@@ -60,7 +63,7 @@ bool response_set_status(Response *response, int status) {
 bool response_set_failure(Response *response, int status) {
 	if (!response_set_status(response, status)) return false;
 	response->body_buffer = malloc(1024);
-	response->body_buffer_size = snprintf(response->body_buffer, 1024, "%d %s\n", status, reason_phrase(status));
+	response->body_size = snprintf(response->body_buffer, 1024, "%d %s\n", status, reason_phrase(status));
 	return true;
 }
 
@@ -68,11 +71,11 @@ bool response_set_header(Response *response, char *key, char *value) {
 	return response_printf(response, "%s: %s\r\n", key, value);
 }
 
-static bool write_all(int fd, const char *buffer, int size) {
+static bool write_all(int fd, const char *buffer, int size, bool more_coming) {
 	while (size > 0) {
-		int bytes_written = write(fd, buffer, size);
+		int bytes_written = send(fd, buffer, size, more_coming ? MSG_MORE : 0);
 		if (bytes_written < 0) {
-			warn("write failed");
+			warn("send failed");
 			return false;
 		}
 		buffer += bytes_written;
@@ -83,11 +86,21 @@ static bool write_all(int fd, const char *buffer, int size) {
 
 bool response_send_headers(Response *response, int fd) {
 	if (!response_printf(response, "\r\n")) return false;
-	write_all(fd, response->headers, response->headers_size);
+	write_all(fd, response->headers, response->headers_size, true);
 	return true;
 }
 
 static bool response_send_from_fd(Response *response, int fd) {
+	int result = sendfile(fd, response->body_fd, NULL, response->body_size);
+	if (result < 0) {
+		warn("sendfile failed");
+		return false;
+	} else if (result < response->body_size) {
+		warnx("sendfile did not send enough data");
+		return false;
+	}
+	return true;
+	/*
 	char buffer[READ_BUFFER_SIZE];
 	int bytes_read;
 	while ((bytes_read = read(response->body_fd, buffer, READ_BUFFER_SIZE)) != 0) {
@@ -98,11 +111,12 @@ static bool response_send_from_fd(Response *response, int fd) {
 		write_all(fd, buffer, bytes_read);
 	}
 	return true;
+	*/
 }
 
 bool response_send_body(Response *response, int fd) {
 	if (response->body_buffer) {
-		return write_all(fd, response->body_buffer, response->body_buffer_size);
+		return write_all(fd, response->body_buffer, response->body_size, false);
 	} else if (response->body_fd) {
 		return response_send_from_fd(response, fd);
 	}

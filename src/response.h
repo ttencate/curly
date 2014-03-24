@@ -25,7 +25,7 @@ typedef struct {
 	/* At most one of body_fd and body_buffer is nonzero. */
 	int body_fd;
 	char *body_buffer;
-	int body_buffer_size;
+	int body_size;
 } Response;
 
 void response_init(Response *response);
