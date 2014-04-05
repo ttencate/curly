@@ -102,34 +102,34 @@ Using `nginx.conf` as supplied, and the command line documented therein, `ab`
 gives us:
 
 	Concurrency Level:      32
-	Time taken for tests:   3.105 seconds
+	Time taken for tests:   2.335 seconds
 	Complete requests:      10000
 	Failed requests:        0
 	Write errors:           0
 	Total transferred:      1026150000 bytes
 	HTML transferred:       1024000000 bytes
-	Requests per second:    3220.57 [#/sec] (mean)
-	Time per request:       9.936 [ms] (mean)
-	Time per request:       0.311 [ms] (mean, across all concurrent requests)
-	Transfer rate:          322733.55 [Kbytes/sec] received
+	Requests per second:    4282.25 [#/sec] (mean)
+	Time per request:       7.473 [ms] (mean)
+	Time per request:       0.234 [ms] (mean, across all concurrent requests)
+	Transfer rate:          429124.28 [Kbytes/sec] received
 
 	Connection Times (ms)
 				  min  mean[+/-sd] median   max
-	Connect:        0    1   0.3      1       4
-	Processing:     4    9   1.0      9      22
-	Waiting:        0    2   1.9      1      17
-	Total:          5   10   1.0     10      22
+	Connect:        0    1   0.1      1       2
+	Processing:     2    7   0.6      7      14
+	Waiting:        0    1   0.8      1      10
+	Total:          3    7   0.5      7      14
 
 	Percentage of the requests served within a certain time (ms)
-	  50%     10
-	  66%     10
-	  75%     10
-	  80%     10
-	  90%     11
-	  95%     11
-	  98%     12
-	  99%     13
-	 100%     22 (longest request)
+	  50%      7
+	  66%      7
+	  75%      8
+	  80%      8
+	  90%      8
+	  95%      8
+	  98%      9
+	  99%      9
+	 100%     14 (longest request)
 
-Which means that (on this crappy unrealistic benchmark), Curly is faster than
-nginx!
+Which means that (on this crappy unrealistic benchmark), Curly is almost as
+fast as nginx!
