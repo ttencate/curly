@@ -98,38 +98,72 @@ it does a great deal more, like virtual hosts, redirection and reverse
 proxying. Still, for serving static files, it should be an apples-to-apples
 comparison.
 
-Using `nginx.conf` as supplied, and the command line documented therein, `ab`
+Using `nginx.conf` as supplied, and the command line documented therein, running
+
+    ab -c 256 -n 100000 http://localhost:8080/lipsum100k.txt
+
 gives us:
 
-	Concurrency Level:      32
-	Time taken for tests:   2.335 seconds
-	Complete requests:      10000
+	Concurrency Level:      256
+	Time taken for tests:   26.900 seconds
+	Complete requests:      100000
 	Failed requests:        0
 	Write errors:           0
-	Total transferred:      1026150000 bytes
-	HTML transferred:       1024000000 bytes
-	Requests per second:    4282.25 [#/sec] (mean)
-	Time per request:       7.473 [ms] (mean)
-	Time per request:       0.234 [ms] (mean, across all concurrent requests)
-	Transfer rate:          429124.28 [Kbytes/sec] received
+	Total transferred:      10261500000 bytes
+	HTML transferred:       10240000000 bytes
+	Requests per second:    3717.43 [#/sec] (mean)
+	Time per request:       68.865 [ms] (mean)
+	Time per request:       0.269 [ms] (mean, across all concurrent requests)
+	Transfer rate:          372523.10 [Kbytes/sec] received
 
 	Connection Times (ms)
 				  min  mean[+/-sd] median   max
-	Connect:        0    1   0.1      1       2
-	Processing:     2    7   0.6      7      14
-	Waiting:        0    1   0.8      1      10
-	Total:          3    7   0.5      7      14
+	Connect:        2   10  52.0      8    1008
+	Processing:    25   58   6.2     60     260
+	Waiting:        2    8   3.4      8     217
+	Total:         34   69  52.3     69    1070
 
 	Percentage of the requests served within a certain time (ms)
-	  50%      7
-	  66%      7
-	  75%      8
-	  80%      8
-	  90%      8
-	  95%      8
-	  98%      9
-	  99%      9
-	 100%     14 (longest request)
+	  50%     69
+	  66%     70
+	  75%     70
+	  80%     70
+	  90%     70
+	  95%     71
+	  98%     73
+	  99%     75
+	 100%   1070 (longest request)
 
-Which means that (on this crappy unrealistic benchmark), Curly is almost as
-fast as nginx!
+The same benchmark for Curly yields:
+
+	Concurrency Level:      256
+	Time taken for tests:   28.956 seconds
+	Complete requests:      100000
+	Failed requests:        0
+	Write errors:           0
+	Total transferred:      10241900000 bytes
+	HTML transferred:       10240000000 bytes
+	Requests per second:    3453.55 [#/sec] (mean)
+	Time per request:       74.127 [ms] (mean)
+	Time per request:       0.290 [ms] (mean, across all concurrent requests)
+	Transfer rate:          345418.89 [Kbytes/sec] received
+
+	Connection Times (ms)
+				  min  mean[+/-sd] median   max
+	Connect:        2   15  77.9      8    1012
+	Processing:    16   59   8.5     60     272
+	Waiting:        2    7   3.6      7     222
+	Total:         29   73  78.8     69    1274
+
+	Percentage of the requests served within a certain time (ms)
+	  50%     69
+	  66%     72
+	  75%     73
+	  80%     74
+	  90%     75
+	  95%     76
+	  98%     86
+	  99%    101
+	 100%   1274 (longest request)
+
+So on this crappy benchmark, performance is certainly comparable to nginx.
