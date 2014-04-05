@@ -14,6 +14,9 @@
 /* Size of read buffer for file operations. */
 #define READ_BUFFER_SIZE 4096
 
+/* Maximum number of events to be returned by epoll. */
+#define EPOLL_MAX_EVENTS 32
+
 /* HTTP version supported. */
 #define HTTP_VERSION "1.1"
 

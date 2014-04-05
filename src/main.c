@@ -1,4 +1,5 @@
 #include "constants.h"
+#include "dispatcher.h"
 #include "handler.h"
 #include "settings.h"
 
@@ -15,7 +16,7 @@
 #include <sysexits.h>
 #include <unistd.h>
 
-static int sockfd = 0;
+static Dispatcher dispatcher;
 
 static int open_listening_socket() {
 	struct protoent *tcp_proto = getprotobyname("tcp");
@@ -33,7 +34,7 @@ static int open_listening_socket() {
 	}
 
 	int sockfd = socket(AF_INET, SOCK_STREAM, tcp_proto->p_proto);
-	if (sockfd == -1) {
+	if (sockfd < 0) {
 		warn("could not create socket");
 		return -1;
 	}
@@ -60,29 +61,43 @@ static int open_listening_socket() {
 	return sockfd;
 }
 
+static bool handle_incoming_connection(int sockfd, void *data) {
+	(void) data; /* Unused. */
+
+	struct sockaddr_in addr;
+	socklen_t addr_len = sizeof(addr);
+
+	int clientfd = accept(sockfd, (struct sockaddr*)&addr, &addr_len);
+	if (clientfd < 0) {
+		warn("could not accept incoming connection");
+		return false;
+	}
+
+	Handler handler;
+	handler_init(&handler, clientfd);
+	handler_handle(&handler);
+	handler_destroy(&handler);
+	close(clientfd);
+
+	return true;
+}
+
 static int run() {
-	sockfd = open_listening_socket();
-	if (sockfd == -1) {
+	int sockfd = open_listening_socket();
+	if (sockfd < 0) {
+		return EX_UNAVAILABLE;
+	}
+	if (!dispatcher_init(&dispatcher)) {
+		return EX_UNAVAILABLE;
+	}
+	if (!dispatcher_register(&dispatcher, sockfd, &handle_incoming_connection, NULL)) {
 		return EX_UNAVAILABLE;
 	}
 
-	while (true) {
-		struct sockaddr_in addr;
-		socklen_t addr_len = sizeof(addr);
-
-		int clientfd = accept(sockfd, (struct sockaddr*)&addr, &addr_len);
-		if (clientfd < 0) {
-			warn("could not accept incoming connection");
-		}
-
-		Handler handler;
-		handler_init(&handler, clientfd);
-		handler_handle(&handler);
-		handler_destroy(&handler);
-		close(clientfd);
-	}
+	dispatcher_run(&dispatcher);
 
 	close(sockfd);
+	dispatcher_destroy(&dispatcher);
 	return EX_OK;
 }
 
