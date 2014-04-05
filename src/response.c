@@ -12,11 +12,14 @@
 
 void response_init(Response *response) {
 	memset(response, 0, sizeof(Response));
+	response->body_fd = -1;
 }
 
 void response_destroy(Response *response) {
 	free(response->body_buffer);
-	if (response->body_fd) close(response->body_fd);
+	if (response->body_fd >= 0) {
+		close(response->body_fd);
+	}
 }
 
 static const char *reason_phrase(int status) {

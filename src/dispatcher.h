@@ -7,10 +7,6 @@ typedef bool (*ReadHandler)(int, void*);
 
 /* Dispatches events on file descriptors to the appropriate handlers, using the
  * kernel's epoll mechanism. Only read events are triggered on.
- *
- * From a call to dispatcher_register() onwards, the file descriptor is owned
- * by the dispatcher. If the handler returns false, the file descriptor is
- * closed and the handler forgotten.
  */
 typedef struct {
 	int epoll;
@@ -25,7 +21,15 @@ typedef struct {
 bool dispatcher_init(Dispatcher *dispatcher);
 void dispatcher_destroy(Dispatcher *dispatcher);
 
+/* Registers a handler for the given file descriptor. It will be called when
+ * data can be read from the file descriptor, and passed the given data pointer.
+ * When the handler returns false, the file descriptor is closed and the data
+ * is freed.
+ */
 bool dispatcher_register(Dispatcher *dispatcher, int fd, ReadHandler handler, void *data);
+
+/* Runs the dispatcher. Currently, only returns if there's a fatal error.
+ */
 bool dispatcher_run(Dispatcher *dispatcher);
 
 #endif

@@ -40,20 +40,21 @@ bool dispatcher_register(Dispatcher *dispatcher, int fd, ReadHandler handler, vo
 
 void dispatch_event(Dispatcher *dispatcher, struct epoll_event *event) {
 	Slot *slot = (Slot*) event->data.ptr;
-	if (event->events & (EPOLLERR | EPOLLRDHUP | EPOLLHUP)) {
-		free(slot);
-		if (epoll_ctl(dispatcher->epoll, EPOLL_CTL_DEL, slot->fd, NULL)) {
-			warn("failed to unregister handler for file descriptor %d", slot->fd);
-			return;
-		}
+	if ((event->events & EPOLLIN) && slot->handler(slot->fd, slot->data)) {
+		return;
 	}
-	if (!slot->handler(slot->fd, slot->data)) {
-		/* We are assuming here that the set of events returned by epoll
-		 * doesn't contain this file descriptor twice. epoll(7) says that
-		 * events will be combined, so we should be safe. */
-		close(slot->fd);
-		free(slot);
+	if (!(event->events & (EPOLLERR | EPOLLRDHUP | EPOLLHUP))) {
+		return;
 	}
+	/* We are assuming here that the set of events returned by epoll
+	 * doesn't contain this file descriptor twice. epoll(7) says that
+	 * events will be combined, so we should be safe. */
+	if (epoll_ctl(dispatcher->epoll, EPOLL_CTL_DEL, slot->fd, NULL)) {
+		warn("failed to unregister handler for file descriptor %d", slot->fd);
+		return;
+	}
+	close(slot->fd);
+	free(slot);
 }
 
 bool dispatcher_run(Dispatcher *dispatcher) {
