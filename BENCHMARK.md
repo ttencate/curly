@@ -13,7 +13,7 @@ requests if we want to be sure nothing gets refused.
 Method:
 
 	src/curly -r test_root
-    ab -c 32 -n 10000 http://localhost/8080/lipsum100k.txt
+    ab -c 32 -n 10000 http://localhost:8080/lipsum100k.txt
 
 Output:
 
@@ -88,3 +88,48 @@ With epoll
 ----------
 
 ... to be implemented!
+
+Comparison to nginx
+===================
+
+Rumour has it that [nginx](http://nginx.org) is one of the fastest HTTP servers
+on the planet. Its architecture (using epoll) is similar to Curly's, although
+it does a great deal more, like virtual hosts, redirection and reverse
+proxying. Still, for serving static files, it should be an apples-to-apples
+comparison.
+
+Using `nginx.conf` as supplied, and the command line documented therein, `ab`
+gives us:
+
+	Concurrency Level:      32
+	Time taken for tests:   3.105 seconds
+	Complete requests:      10000
+	Failed requests:        0
+	Write errors:           0
+	Total transferred:      1026150000 bytes
+	HTML transferred:       1024000000 bytes
+	Requests per second:    3220.57 [#/sec] (mean)
+	Time per request:       9.936 [ms] (mean)
+	Time per request:       0.311 [ms] (mean, across all concurrent requests)
+	Transfer rate:          322733.55 [Kbytes/sec] received
+
+	Connection Times (ms)
+				  min  mean[+/-sd] median   max
+	Connect:        0    1   0.3      1       4
+	Processing:     4    9   1.0      9      22
+	Waiting:        0    2   1.9      1      17
+	Total:          5   10   1.0     10      22
+
+	Percentage of the requests served within a certain time (ms)
+	  50%     10
+	  66%     10
+	  75%     10
+	  80%     10
+	  90%     11
+	  95%     11
+	  98%     12
+	  99%     13
+	 100%     22 (longest request)
+
+Which means that (on this crappy unrealistic benchmark), Curly is faster than
+nginx!
