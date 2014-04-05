@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sysexits.h>
@@ -61,24 +62,28 @@ static int open_listening_socket() {
 	return sockfd;
 }
 
-static bool handle_incoming_connection(int sockfd, void *data) {
+static bool handle_incoming_connection(int sockfd, uint32_t event, void *data) {
 	(void) data; /* Unused. */
 
-	struct sockaddr_in addr;
-	socklen_t addr_len = sizeof(addr);
+	if (event & EPOLLIN) {
+		struct sockaddr_in addr;
+		socklen_t addr_len = sizeof(addr);
 
-	int clientfd = accept(sockfd, (struct sockaddr*)&addr, &addr_len);
-	if (clientfd < 0) {
-		warn("could not accept incoming connection");
+		int clientfd = accept(sockfd, (struct sockaddr*)&addr, &addr_len);
+		if (clientfd < 0) {
+			warn("could not accept incoming connection");
+			return false;
+		}
+
+		/* TODO timeouts */
+		Handler *handler = malloc(sizeof(Handler));
+		handler_init(handler);
+		return dispatcher_register(&dispatcher, clientfd, &handler_wrapper, handler);
+	}
+	if (event & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+		/* TODO make this finish the dispatcher loop */
 		return false;
 	}
-
-	Handler handler;
-	handler_init(&handler, clientfd);
-	handler_handle(&handler);
-	handler_destroy(&handler);
-	close(clientfd);
-
 	return true;
 }
 

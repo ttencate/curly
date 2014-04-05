@@ -10,12 +10,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-void handler_init(Handler *handler, int fd) {
-	handler->fd = fd;
+void handler_init(Handler *handler) {
 	request_init(&handler->request);
 	response_init(&handler->response);
 	parser_init(&handler->parser, &handler->request);
@@ -101,46 +101,67 @@ static void handle_request(Handler *handler) {
 	free(canonical_path);
 }
 
-void handler_handle(Handler *handler) {
+static bool handler_send_response(Handler *handler, int client_fd) {
+	if (!response_send_headers(&handler->response, client_fd)) {
+		return false;
+	}
+	if (handler->request.method && strcmp(handler->request.method, "HEAD")) {
+		if (!response_send_body(&handler->response, client_fd)) {
+			return false;
+		}
+	}
+	return false;
+}
+
+bool handler_handle_incoming(Handler *handler, int client_fd) {
 	Request *request = &handler->request;
 	Response *response = &handler->response;
 
-	ssize_t count;
-	for (;;) {
-		/* TODO timeouts */
-		char *buffer = parser_get_write_ptr(&handler->parser);
-		int size = parser_get_write_size(&handler->parser);
-		if (size <= 0) {
-			response_set_failure(response, STATUS_REQUEST_ENTITY_TOO_LARGE);
-			break;
-		}
-		count = read(handler->fd, buffer, size);
-		if (count < 0) {
-			warn("read failed");
-			break;
-		}
-		if (count == 0) {
-			warnx("connection closed before full request received");
-			break;
-		}
-		if (!parser_parse_bytes(&handler->parser, count)) {
-			response_set_failure(response, STATUS_BAD_REQUEST);
-			break;
-		}
-		if ((request->http_major > 0 && request->http_major != 1) ||
-			(request->http_minor > 0 && request->http_minor > 1)) {
-			response_set_failure(response, STATUS_HTTP_VERSION_NOT_SUPPORTED);
-			break;
-		}
-		if (request->headers_complete) {
-			handle_request(handler);
-			break;
-		}
+	char *buffer = parser_get_write_ptr(&handler->parser);
+	int size = parser_get_write_size(&handler->parser);
+	if (size <= 0) {
+		response_set_failure(response, STATUS_REQUEST_ENTITY_TOO_LARGE);
+		return handler_send_response(handler, client_fd);
 	}
-
-	if (!response_send_headers(response, handler->fd)) return;
-
-	if (request->method && strcmp(request->method, "HEAD")) {
-		if (!response_send_body(response, handler->fd)) return;
+	ssize_t count = read(client_fd, buffer, size);
+	if (count < 0) {
+		warn("read failed");
+		return false;
 	}
+	if (count == 0) {
+		warnx("connection closed before full request received");
+		return false;
+	}
+	if (!parser_parse_bytes(&handler->parser, count)) {
+		response_set_failure(response, STATUS_BAD_REQUEST);
+		return handler_send_response(handler, client_fd);
+	}
+	if ((request->http_major > 0 && request->http_major != 1) ||
+		(request->http_minor > 0 && request->http_minor > 1)) {
+		response_set_failure(response, STATUS_HTTP_VERSION_NOT_SUPPORTED);
+		return handler_send_response(handler, client_fd);
+	}
+	if (request->headers_complete) {
+		handle_request(handler);
+		return handler_send_response(handler, client_fd);
+	}
+	return true;
+}
+
+bool handler_wrapper(int fd, uint32_t events, void *data) {
+	Handler *handler = (Handler*) data;
+	bool close_socket = false;
+	if (events & EPOLLIN) {
+		close_socket = !handler_handle_incoming(handler, fd);
+	}
+	if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+		close_socket = true;
+	}
+	if (close_socket) {
+		handler_destroy(handler);
+		free(handler);
+		close(fd);
+		return false;
+	}
+	return true;
 }

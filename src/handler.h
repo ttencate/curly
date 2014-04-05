@@ -6,16 +6,19 @@
 #include "response.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
-	int fd;
 	Request request;
 	Response response;
 	Parser parser;
 } Handler;
 
-void handler_init(Handler *handler, int fd);
+void handler_init(Handler *handler);
 void handler_destroy(Handler *handler);
-void handler_handle(Handler *handler);
+
+bool handler_handle_incoming(Handler *handler, int client_fd);
+
+bool handler_wrapper(int fd, uint32_t events, void *handler);
 
 #endif
